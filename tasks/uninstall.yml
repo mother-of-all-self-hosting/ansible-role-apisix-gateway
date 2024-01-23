@@ -1,0 +1,25 @@
+---
+
+- name: Check existence of APISIX Gateway systemd service
+  ansible.builtin.stat:
+    path: "{{ devture_systemd_docker_base_systemd_path }}/{{ apisix_gateway_identifier }}.service"
+  register: apisix_gateway_service_stat
+
+- when: apisix_gateway_service_stat.stat.exists | bool
+  block:
+    - name: Ensure APISIX Gateway systemd service is stopped
+      ansible.builtin.service:
+        name: "{{ apisix_gateway_identifier }}"
+        state: stopped
+        enabled: false
+        daemon_reload: true
+
+    - name: Ensure APISIX Gateway systemd service does not exist
+      ansible.builtin.file:
+        path: "{{ devture_systemd_docker_base_systemd_path }}/{{ apisix_gateway_identifier }}.service"
+        state: absent
+
+    - name: Ensure APISIX Gateway path doesn't exist
+      ansible.builtin.file:
+        path: "{{ apisix_gateway_base_path }}"
+        state: absent

@@ -1,0 +1,25 @@
+---
+
+- name: Fail if required APISIX Gateway settings not defined
+  ansible.builtin.fail:
+    msg: >-
+      You need to define a required configuration setting (`{{ item.name }}`).
+  when: "item.when | bool and vars[item.name] == ''"
+  with_items:
+    - {'name': 'apisix_gateway_identifier', 'when': true}
+    - {'name': 'apisix_gateway_uid', 'when': true}
+    - {'name': 'apisix_gateway_gid', 'when': true}
+    - {'name': 'apisix_gateway_hostname', 'when': true}
+    - {'name': 'apisix_gateway_path_prefix', 'when': true}
+    - {'name': 'apisix_gateway_container_network', 'when': true}
+    - {'name': 'apisix_gateway_container_labels_admin_hostname', 'when': "{{ apisix_gateway_container_labels_admin_enabled }}"}
+    - {'name': 'apisix_gateway_container_labels_control_hostname', 'when': "{{ apisix_gateway_container_labels_control_enabled }}"}
+
+# We ensure it doesn't end with a slash, because we handle both (slash and no-slash).
+# Knowing that `apisix_gateway_path_prefix` does not end with a slash
+# ensures we know how to set these routes up without having to do "does it end with a slash" checks elsewhere.
+- name: Fail if apisix_gateway_path_prefix ends with a slash
+  ansible.builtin.fail:
+    msg: >-
+      apisix_gateway_path_prefix (`{{ apisix_gateway_path_prefix }}`) must either be `/` or not end with a slash (e.g. `/apisix`).
+  when: "apisix_gateway_path_prefix != '/' and apisix_gateway_path_prefix[-1] == '/'"

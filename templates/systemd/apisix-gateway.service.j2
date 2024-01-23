@@ -1,0 +1,64 @@
+#jinja2: lstrip_blocks: "True"
+[Unit]
+Description=APISIX gateway ({{ apisix_gateway_identifier }})
+{% for service in apisix_gateway_systemd_required_services_list %}
+Requires={{ service }}
+After={{ service }}
+{% endfor %}
+DefaultDependencies=no
+
+[Service]
+Type=simple
+Environment="HOME={{ devture_systemd_docker_base_systemd_unit_home_path }}"
+ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} stop --time={{ devture_systemd_docker_base_container_stop_grace_time_seconds }} {{ apisix_gateway_identifier }} 2>/dev/null || true'
+ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} rm {{ apisix_gateway_identifier }} 2>/dev/null || true'
+
+{#
+	Cannot use `--read-only` with this service, nor `--user=..`, because it fails. Logs:
+	> /usr/local/openresty//luajit/bin/luajit ./apisix/cli/apisix.lua init
+	> failed to update nginx.conf: failed to open file: /usr/local/apisix/conf/nginx.conf, error info:/usr/local/apisix/conf/nginx.conf: Read-only file system
+#}
+ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
+			--rm \
+			--name={{ apisix_gateway_identifier }} \
+			--log-driver=none \
+			--cap-drop=ALL \
+			--network={{ apisix_gateway_container_network }} \
+			{% if apisix_gateway_container_gateway_http_bind_port %}
+			-p {{ apisix_gateway_container_gateway_http_bind_port }}:{{ apisix_gateway_config_apisix_node_listen }} \
+			{% endif %}
+			{% if apisix_gateway_container_control_http_bind_port and apisix_gateway_config_apisix_enable_control %}
+			-p {{ apisix_gateway_container_control_http_bind_port }}:{{ apisix_gateway_config_apisix_control_port }} \
+			{% endif %}
+			{% if apisix_gateway_container_admin_http_bind_port %}
+			-p {{ apisix_gateway_container_admin_http_bind_port }}:{{ apisix_gateway_config_deployment_admin_admin_listen_port }} \
+			{% endif %}
+			{% if apisix_gateway_container_metrics_http_bind_port %}
+			-p {{ apisix_gateway_container_metrics_http_bind_port }}:{{ apisix_gateway_config_plugin_attr_prometheus_export_addr_port }} \
+			{% endif %}
+			--env-file={{ apisix_gateway_base_path }}/env \
+			--label-file={{ apisix_gateway_base_path }}/labels \
+			--mount type=bind,src={{ apisix_gateway_config_path }}/config.yaml,dst=/usr/local/apisix/conf/config.yaml,ro \
+			{% for volume in apisix_gateway_container_additional_volumes %}
+			--mount type={{ volume.type | default('bind' if '/' in volume.src else 'volume') }},src={{ volume.src }},dst={{ volume.dst }}{{ (',' + volume.options) if volume.options | default('') else '' }} \
+			{% endfor %}
+			{% for arg in apisix_gateway_container_extra_arguments %}
+			{{ arg }} \
+			{% endfor %}
+			{{ apisix_gateway_container_image }}
+
+{% for network in apisix_gateway_container_additional_networks %}
+ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} network connect {{ network }} {{ apisix_gateway_identifier }}
+{% endfor %}
+
+ExecStart={{ devture_systemd_docker_base_host_command_docker }} start --attach {{ apisix_gateway_identifier }}
+
+ExecStop=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} stop --time={{ devture_systemd_docker_base_container_stop_grace_time_seconds }} {{ apisix_gateway_identifier }} 2>/dev/null || true'
+ExecStop=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} rm {{ apisix_gateway_identifier }} 2>/dev/null || true'
+
+Restart=always
+RestartSec=30
+SyslogIdentifier={{ apisix_gateway_identifier }}
+
+[Install]
+WantedBy=multi-user.target

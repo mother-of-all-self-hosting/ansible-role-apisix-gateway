@@ -1,0 +1,39 @@
+# This matches the configuration file found at:
+# https://github.com/apache/apisix-docker/blob/master/example/apisix_conf/config.yaml
+#
+# To extend or change it, use Ansible variables or `apisix_gateway_config_extension_yaml`.
+
+apisix:
+  node_listen: {{ apisix_gateway_config_apisix_node_listen | to_json }}
+  enable_ipv6: {{ apisix_gateway_config_apisix_enable_ipv6 | to_json }}
+
+  enable_control: {{ apisix_gateway_config_apisix_enable_control | to_json }}
+  control:
+    ip: {{ apisix_gateway_config_apisix_control_ip | to_json }}
+    port: {{ apisix_gateway_config_apisix_control_port | to_json }}
+
+deployment:
+  admin:
+    admin_listen:
+      ip: {{ apisix_gateway_config_deployment_admin_admin_listen_ip | to_json }}
+      port: {{ apisix_gateway_config_deployment_admin_admin_listen_port | to_json }}
+
+    allow_admin: {{ apisix_gateway_config_deployment_admin_allow_admin | to_json }}
+
+    admin_key_required: {{ apisix_gateway_config_deployment_admin_admin_key_required | to_json }}
+    admin_key: {{ apisix_gateway_config_deployment_admin_admin_key | to_json }}
+
+    enable_admin_cors: {{ apisix_gateway_config_deployment_admin_enable_admin_cors | to_json }}
+
+  etcd:
+    host: {{ apisix_gateway_config_deployment_etcd_host | to_json }}
+    prefix: {{ apisix_gateway_config_deployment_etcd_prefix | to_json }}
+    timeout: {{ apisix_gateway_config_deployment_etcd_timeout | to_json }}
+    user: {{ apisix_gateway_config_deployment_etcd_user | to_json }}
+    password: {{ apisix_gateway_config_deployment_etcd_password | to_json }}
+
+plugin_attr:
+  prometheus:
+    export_addr:
+      ip: {{ apisix_gateway_config_plugin_attr_prometheus_export_addr_ip | to_json }}
+      port: {{ apisix_gateway_config_plugin_attr_prometheus_export_addr_port | to_json }}

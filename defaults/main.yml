@@ -1,0 +1,259 @@
+---
+
+# Project source code URL: https://github.com/apache/apisix
+
+apisix_gateway_enabled: true
+
+apisix_gateway_identifier: apisix-gateway
+
+apisix_gateway_uid: ''
+apisix_gateway_gid: ''
+
+apisix_gateway_version: 3.8.0
+
+apisix_gateway_scheme: https
+
+# The hostname at which APISIX serves its API gateway
+apisix_gateway_hostname: ''
+
+# The path at which APISIX serves its API gateway.
+# This value must either be `/` or not end with a slash (e.g. `/apisix`).
+apisix_gateway_path_prefix: /
+
+apisix_gateway_base_path: "/{{ apisix_gateway_identifier }}"
+apisix_gateway_config_path: "{{ apisix_gateway_base_path }}/config"
+
+apisix_gateway_container_image: "{{ apisix_gateway_container_image_registry_prefix }}apache/apisix:{{ apisix_gateway_container_image_tag }}"
+apisix_gateway_container_image_registry_prefix: docker.io/
+apisix_gateway_container_image_tag: "{{ apisix_gateway_version }}-debian"
+apisix_gateway_container_image_force_pull: "{{ apisix_gateway_container_image.endswith(':latest') }}"
+
+# The base container network. It will be auto-created by this role if it doesn't exist already.
+apisix_gateway_container_network: "{{ apisix_gateway_identifier }}"
+
+# A list of additional container networks that the container would be connected to.
+# The role does not create these networks, so make sure they already exist.
+# Use this to expose this container to another reverse proxy, which runs in a different container network.
+apisix_gateway_container_additional_networks: "{{ apisix_gateway_container_additional_networks_auto + apisix_gateway_container_additional_networks_custom }}"
+apisix_gateway_container_additional_networks_auto: []
+apisix_gateway_container_additional_networks_custom: []
+
+# Specifies how the container publishes its HTTP port for the gateway service.
+#
+# Related to `apisix_gateway_config_apisix_node_listen`
+#
+# Takes an "<ip>:<port>" value (e.g. "127.0.0.1:9080"), just a port number or an empty string to not expose.
+apisix_gateway_container_gateway_http_bind_port: ''
+
+# Specifies how the container publishes its HTTP port for the control service.
+#
+# Related to `apisix_gateway_config_apisix_control_port` and `apisix_gateway_config_apisix_enable_control`
+#
+# Takes an "<ip>:<port>" value (e.g. "127.0.0.1:9092"), just a port number or an empty string to not expose.
+apisix_gateway_container_control_http_bind_port: ''
+
+# Specifies how the container publishes its HTTP port for the admin service.
+#
+# Related to `apisix_gateway_config_deployment_admin_admin_listen_port`.
+#
+# Takes an "<ip>:<port>" value (e.g. "127.0.0.1:9180"), just a port number or an empty string to not expose.
+apisix_gateway_container_admin_http_bind_port: ''
+
+# Specifies how the container publishes its HTTP port for the admin service.
+#
+# Related to `apisix_gateway_config_plugin_attr_prometheus_export_addr_port`.
+#
+# Takes an "<ip>:<port>" value (e.g. "127.0.0.1:9091"), just a port number or an empty string to not expose.
+apisix_gateway_container_metrics_http_bind_port: ''
+
+# apisix_gateway_container_labels_traefik_enabled controls whether labels to assist a Traefik reverse-proxy will be attached to the container.
+# See `../templates/labels.j2` for details.
+#
+# To inject your own other container labels, see `apisix_gateway_container_labels_additional_labels`.
+apisix_gateway_container_labels_traefik_enabled: true
+apisix_gateway_container_labels_traefik_docker_network: "{{ apisix_gateway_container_network }}"
+apisix_gateway_container_labels_traefik_entrypoints: web-secure
+apisix_gateway_container_labels_traefik_tls_certResolver: default  # noqa var-naming
+
+# Controls if labels are added to expose the Gateway API publicly.
+apisix_gateway_container_labels_gateway_enabled: true
+apisix_gateway_container_labels_gateway_hostname: "{{ apisix_gateway_hostname }}"
+# The path prefix must either be `/` or not end with a slash (e.g. `/apisix`).
+apisix_gateway_container_labels_gateway_path_prefix: "{{ apisix_gateway_path_prefix }}"
+apisix_gateway_container_labels_gateway_rule: "Host(`{{ apisix_gateway_container_labels_gateway_hostname }}`){% if apisix_gateway_container_labels_gateway_path_prefix != '/' %} && PathPrefix(`{{ apisix_gateway_container_labels_gateway_path_prefix }}`){% endif %}"
+apisix_gateway_container_labels_gateway_priority: 0
+apisix_gateway_container_labels_gateway_entrypoints: "{{ apisix_gateway_container_labels_traefik_entrypoints }}"
+apisix_gateway_container_labels_gateway_middlewares: []
+apisix_gateway_container_labels_gateway_tls: "{{ apisix_gateway_container_labels_gateway_entrypoints != 'web' }}"
+apisix_gateway_container_labels_gateway_tls_certResolver: "{{ apisix_gateway_container_labels_traefik_tls_certResolver }}"  # noqa var-naming
+
+# Controls if labels are added to expose the Admin API publicly.
+# This API is protected with a key (see `apisix_gateway_config_deployment_admin_admin_key`),
+# so exposing it publicly should be safe.
+apisix_gateway_container_labels_admin_enabled: false
+apisix_gateway_container_labels_admin_hostname: ""
+# The path prefix must either be `/` or not end with a slash (e.g. `/apisix`).
+apisix_gateway_container_labels_admin_path_prefix: /
+apisix_gateway_container_labels_admin_rule: "Host(`{{ apisix_gateway_container_labels_admin_hostname }}`){% if apisix_gateway_container_labels_admin_path_prefix != '/' %} && PathPrefix(`{{ apisix_gateway_container_labels_admin_path_prefix }}`){% endif %}"
+apisix_gateway_container_labels_admin_priority: 0
+apisix_gateway_container_labels_admin_entrypoints: "{{ apisix_gateway_container_labels_traefik_entrypoints }}"
+apisix_gateway_container_labels_admin_middlewares: []
+apisix_gateway_container_labels_admin_tls: "{{ apisix_gateway_container_labels_admin_entrypoints != 'web' }}"
+apisix_gateway_container_labels_admin_tls_certResolver: "{{ apisix_gateway_container_labels_traefik_tls_certResolver }}"  # noqa var-naming
+
+# Controls if labels are added to expose the Control API publicly.
+# This API has no authentication/authorization mechanisms, so enabling it publicly is not safe.
+apisix_gateway_container_labels_control_enabled: false
+apisix_gateway_container_labels_control_hostname: ""
+# The path prefix must either be `/` or not end with a slash (e.g. `/apisix`).
+apisix_gateway_container_labels_control_path_prefix: /
+apisix_gateway_container_labels_control_rule: "Host(`{{ apisix_gateway_container_labels_control_hostname }}`){% if apisix_gateway_container_labels_control_path_prefix != '/' %} && PathPrefix(`{{ apisix_gateway_container_labels_control_path_prefix }}`){% endif %}"
+apisix_gateway_container_labels_control_priority: 0
+apisix_gateway_container_labels_control_entrypoints: "{{ apisix_gateway_container_labels_traefik_entrypoints }}"
+apisix_gateway_container_labels_control_middlewares: []
+apisix_gateway_container_labels_control_tls: "{{ apisix_gateway_container_labels_control_entrypoints != 'web' }}"
+apisix_gateway_container_labels_control_tls_certResolver: "{{ apisix_gateway_container_labels_traefik_tls_certResolver }}"  # noqa var-naming
+
+# apisix_gateway_container_labels_additional_labels contains a multiline string with additional labels to add to the container label file.
+# See `../templates/labels.j2` for details.
+#
+# Example:
+# apisix_gateway_container_labels_additional_labels: |
+#   my.label=1
+#   another.label="here"
+apisix_gateway_container_labels_additional_labels: ''
+
+# A list of additional "volumes" to mount in the container.
+#
+# See the `--mount` documentation for the `docker run` command.
+#
+# Example:
+# apisix_gateway_container_additional_volumes:
+#   - type: bind
+#     src: /path/on/the/host
+#     dst: /data
+#   - type: bind
+#     src: /another-path/on/the/host
+#     dst: /read-only
+#     options: readonly
+apisix_gateway_container_additional_volumes: []
+
+# A list of extra arguments to pass to the container
+apisix_gateway_container_extra_arguments: []
+
+# Additional environment variables.
+apisix_gateway_environment_variables_additional_variables: ''
+
+# Controls the `apisix.node_listen` configuration property
+apisix_gateway_config_apisix_node_listen: 9080
+
+# Controls the `apisix.enable_ipv6` configuration property
+apisix_gateway_config_apisix_enable_ipv6: false
+
+# Controls the `apisix.enable_control` configuration property
+apisix_gateway_config_apisix_enable_control: false
+
+# Controls the `apisix.control.ip` configuration property
+apisix_gateway_config_apisix_control_ip: '0.0.0.0'
+
+# Controls the `apisix.control.port` configuration property
+apisix_gateway_config_apisix_control_port: 9092
+
+# Controls the `apisix.deployment.admin.admin_listen.ip` configuration property.
+# See: https://apisix.apache.org/docs/apisix/admin-api/
+apisix_gateway_config_deployment_admin_admin_listen_ip: '0.0.0.0'
+
+# Controls the `apisix.deployment.admin.admin_listen.port` configuration property.
+# See: https://apisix.apache.org/docs/apisix/admin-api/
+apisix_gateway_config_deployment_admin_admin_listen_port: 9180
+
+# Controls the `apisix.deployment.admin.allow_admin` configuration property.
+# It should contain whitelisted IP addresses that can reach the admin panel.
+#
+# When fronting with a reverse-proxy, this cannot be used,
+# as it matches against the IP address of the reverse-proxy,
+# not the forwarded client IP address.
+#
+# See: https://apisix.apache.org/docs/apisix/admin-api/
+# See: https://nginx.org/en/docs/http/ngx_http_access_module.html#allow
+apisix_gateway_config_deployment_admin_allow_admin: ['0.0.0.0/0']
+
+# Controls the `apisix.deployment.admin.admin_key_required` configuration property.
+# Related to `apisix_gateway_config_deployment_admin_admin_key`.
+apisix_gateway_config_deployment_admin_admin_key_required: true
+
+# Controls the `apisix.deployment.admin.admin_key` configuration property.
+# Related to: `apisix_gateway_config_deployment_admin_admin_key_required`
+# It should contain a list of objects for defining access.
+# See: https://apisix.apache.org/docs/apisix/admin-api/
+#
+# Example:
+# apisix_gateway_config_deployment_admin_admin_key:
+#   - name: admin_username
+#     key: API_KEY_SECRET
+#     role: admin
+#   - name: viewer_username
+#     key: API_KEY_SECRET
+#     role: viewer
+apisix_gateway_config_deployment_admin_admin_key: []
+
+# Controls the `apisix.deployment.admin.enable_admin_cors` configuration property.
+# Enable Admin API CORS response header `Access-Control-Allow-Origin`.
+apisix_gateway_config_deployment_admin_enable_admin_cors: true
+
+# Controls the `apisix.deployment.etcd.host` configuration property.
+# This should contain at least one (but possibly multiple URLs) pointing to an same etcd cluster.
+apisix_gateway_config_deployment_etcd_host: []
+
+# Controls the `apisix.deployment.etcd.prefix` configuration property.
+# It specifies APISIX's prefix in etcd.
+apisix_gateway_config_deployment_etcd_prefix: /apisix
+
+# Controls the `apisix.deployment.etcd.timeout` configuration property.
+# Timeout value (in seconds) for connecting to the etcd cluster.
+apisix_gateway_config_deployment_etcd_timeout: 30
+
+# Controls the `apisix.deployment.etcd.user` configuration property.
+apisix_gateway_config_deployment_etcd_user: ''
+
+# Controls the `apisix.deployment.etcd.password` configuration property.
+apisix_gateway_config_deployment_etcd_password: ''
+
+# Controls the `plugin_attr.prometheus.export_addr.ip` configuration property.
+apisix_gateway_config_plugin_attr_prometheus_export_addr_ip: '0.0.0.0'
+
+# Controls the `plugin_attr.prometheus.export_addr.port` configuration property.
+apisix_gateway_config_plugin_attr_prometheus_export_addr_port: 9091
+
+# Default APISIX Gateway configuration template which covers the generic use case.
+# You can customize it by controlling the various variables inside it.
+#
+# For a more advanced customization, you can extend the default (see `apisix_gateway_config_extension_yaml`)
+# or completely replace this variable with your own template.
+apisix_gateway_config_yaml: "{{ lookup('template', 'templates/config.yaml.j2') }}"
+
+apisix_gateway_config_extension_yaml: |
+  # Your custom YAML configuration for APISIX Gateway goes here.
+  # This configuration extends the default starting configuration (`apisix_gateway_config_yaml`).
+  #
+  # You can override individual variables from the default configuration, or introduce new ones.
+  #
+  # If you need something more special, you can take full control by
+  # completely redefining `apisix_gateway_config_yaml`.
+  #
+  # Example configuration extension follows:
+  #
+  # apisix:
+  #   enable_admin_cors: false
+
+apisix_gateway_config_extension: "{{ apisix_gateway_config_extension_yaml | from_yaml if apisix_gateway_config_extension_yaml | from_yaml is mapping else {} }}"
+
+# Holds the final APISIX Gateway configuration (a combination of the default and its extension).
+# You most likely don't need to touch this variable. Instead, see `apisix_gateway_config_yaml`.
+apisix_gateway_config: "{{ apisix_gateway_config_yaml | from_yaml | combine(apisix_gateway_config_extension, recursive=True) }}"
+
+# List of systemd services that apisix.service depends on
+apisix_gateway_systemd_required_services_list: "{{ apisix_gateway_systemd_required_systemd_services_list_default + apisix_gateway_systemd_required_systemd_services_list_auto + apisix_gateway_systemd_required_systemd_services_list_custom }}"
+apisix_gateway_systemd_required_systemd_services_list_default: ['docker.service']
+apisix_gateway_systemd_required_systemd_services_list_auto: []
+apisix_gateway_systemd_required_systemd_services_list_custom: []

@@ -1,0 +1,20 @@
+---
+
+- block:
+    - when: apisix_gateway_enabled | bool
+      ansible.builtin.include_tasks: "{{ role_path }}/tasks/validate_config.yml"
+
+    - when: apisix_gateway_enabled | bool
+      ansible.builtin.include_tasks: "{{ role_path }}/tasks/install.yml"
+  tags:
+    - setup-all
+    - setup-apisix-gateway
+    - install-all
+    - install-apisix-gateway
+
+- block:
+    - when: not apisix_gateway_enabled | bool
+      ansible.builtin.include_tasks: "{{ role_path }}/tasks/uninstall.yml"
+  tags:
+    - setup-all
+    - setup-apisix-gateway
