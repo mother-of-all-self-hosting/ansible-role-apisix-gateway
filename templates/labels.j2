@@ -168,23 +168,23 @@ traefik.http.middlewares.{{ apisix_gateway_identifier }}-metrics-basic-auth.basi
 traefik.http.middlewares.{{ apisix_gateway_identifier }}-metrics-replace-path.replacepath.path={{ apisix_gateway_config_plugin_attr_prometheus_export_uri }}
 {% set middlewares = middlewares + [apisix_gateway_identifier + '-metrics-replace-path'] %}
 
-traefik.http.routers.{{ apisix_gateway_identifier }}-admin.rule={{ apisix_gateway_container_labels_metrics_rule }}
+traefik.http.routers.{{ apisix_gateway_identifier }}-metrics.rule={{ apisix_gateway_container_labels_metrics_rule }}
 
 {% if apisix_gateway_container_labels_metrics_priority | int > 0 %}
-traefik.http.routers.{{ apisix_gateway_identifier }}-admin.priority={{ apisix_gateway_container_labels_metrics_priority }}
+traefik.http.routers.{{ apisix_gateway_identifier }}-metrics.priority={{ apisix_gateway_container_labels_metrics_priority }}
 {% endif %}
 
-traefik.http.routers.{{ apisix_gateway_identifier }}-admin.service={{ apisix_gateway_identifier }}-metrics
+traefik.http.routers.{{ apisix_gateway_identifier }}-metrics.service={{ apisix_gateway_identifier }}-metrics
 
 {% if middlewares | length > 0 %}
-traefik.http.routers.{{ apisix_gateway_identifier }}-admin.middlewares={{ middlewares | join(',') }}
+traefik.http.routers.{{ apisix_gateway_identifier }}-metrics.middlewares={{ middlewares | join(',') }}
 {% endif %}
 
-traefik.http.routers.{{ apisix_gateway_identifier }}-admin.entrypoints={{ apisix_gateway_container_labels_metrics_entrypoints }}
+traefik.http.routers.{{ apisix_gateway_identifier }}-metrics.entrypoints={{ apisix_gateway_container_labels_metrics_entrypoints }}
 
-traefik.http.routers.{{ apisix_gateway_identifier }}-admin.tls={{ apisix_gateway_container_labels_metrics_tls | to_json }}
+traefik.http.routers.{{ apisix_gateway_identifier }}-metrics.tls={{ apisix_gateway_container_labels_metrics_tls | to_json }}
 {% if apisix_gateway_container_labels_metrics_tls %}
-traefik.http.routers.{{ apisix_gateway_identifier }}-admin.tls.certResolver={{ apisix_gateway_container_labels_metrics_tls_certResolver }}
+traefik.http.routers.{{ apisix_gateway_identifier }}-metrics.tls.certResolver={{ apisix_gateway_container_labels_metrics_tls_certResolver }}
 {% endif %}
 
 ############################################################
