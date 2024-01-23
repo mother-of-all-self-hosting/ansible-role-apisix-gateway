@@ -23,6 +23,7 @@ ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
 			--name={{ apisix_gateway_identifier }} \
 			--log-driver=none \
 			--cap-drop=ALL \
+			--hostname={{ apisix_gateway_container_hostname }} \
 			--network={{ apisix_gateway_container_network }} \
 			{% if apisix_gateway_container_gateway_http_bind_port %}
 			-p {{ apisix_gateway_container_gateway_http_bind_port }}:{{ apisix_gateway_config_apisix_node_listen }} \
