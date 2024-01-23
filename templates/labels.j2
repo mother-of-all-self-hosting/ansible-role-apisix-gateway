@@ -150,6 +150,50 @@ traefik.http.routers.{{ apisix_gateway_identifier }}-admin.tls.certResolver={{ a
 ############################################################
 {% endif %}
 
+
+{% if apisix_gateway_container_labels_metrics_enabled %}
+############################################################
+#                                                          #
+# Metrics                                                  #
+#                                                          #
+############################################################
+
+{% set middlewares = apisix_gateway_container_labels_metrics_middlewares %}
+
+{% if apisix_gateway_container_labels_metrics_middleware_basic_auth_enabled %}
+traefik.http.middlewares.{{ apisix_gateway_identifier }}-metrics-basic-auth.basicauth.users={{ apisix_gateway_container_labels_metrics_middleware_basic_auth_users }}
+{% set middlewares = middlewares + [apisix_gateway_identifier + '-metrics-basic-auth'] %}
+{% endif %}
+
+traefik.http.middlewares.{{ apisix_gateway_identifier }}-metrics-replace-path.replacepath.path={{ apisix_gateway_config_plugin_attr_prometheus_export_uri }}
+{% set middlewares = middlewares + [apisix_gateway_identifier + '-metrics-replace-path'] %}
+
+traefik.http.routers.{{ apisix_gateway_identifier }}-admin.rule={{ apisix_gateway_container_labels_metrics_rule }}
+
+{% if apisix_gateway_container_labels_metrics_priority | int > 0 %}
+traefik.http.routers.{{ apisix_gateway_identifier }}-admin.priority={{ apisix_gateway_container_labels_metrics_priority }}
+{% endif %}
+
+traefik.http.routers.{{ apisix_gateway_identifier }}-admin.service={{ apisix_gateway_identifier }}-metrics
+
+{% if middlewares | length > 0 %}
+traefik.http.routers.{{ apisix_gateway_identifier }}-admin.middlewares={{ middlewares | join(',') }}
+{% endif %}
+
+traefik.http.routers.{{ apisix_gateway_identifier }}-admin.entrypoints={{ apisix_gateway_container_labels_metrics_entrypoints }}
+
+traefik.http.routers.{{ apisix_gateway_identifier }}-admin.tls={{ apisix_gateway_container_labels_metrics_tls | to_json }}
+{% if apisix_gateway_container_labels_metrics_tls %}
+traefik.http.routers.{{ apisix_gateway_identifier }}-admin.tls.certResolver={{ apisix_gateway_container_labels_metrics_tls_certResolver }}
+{% endif %}
+
+############################################################
+#                                                          #
+# /Metrics                                                 #
+#                                                          #
+############################################################
+{% endif %}
+
 {% endif %}
 
 {{ apisix_gateway_container_labels_additional_labels }}

@@ -37,3 +37,4 @@ plugin_attr:
     export_addr:
       ip: {{ apisix_gateway_config_plugin_attr_prometheus_export_addr_ip | to_json }}
       port: {{ apisix_gateway_config_plugin_attr_prometheus_export_addr_port | to_json }}
+    export_uri: {{ apisix_gateway_config_plugin_attr_prometheus_export_uri | to_json }}

@@ -14,6 +14,7 @@
     - {'name': 'apisix_gateway_container_network', 'when': true}
     - {'name': 'apisix_gateway_container_labels_admin_hostname', 'when': "{{ apisix_gateway_container_labels_admin_enabled }}"}
     - {'name': 'apisix_gateway_container_labels_control_hostname', 'when': "{{ apisix_gateway_container_labels_control_enabled }}"}
+    - {'name': 'apisix_gateway_container_labels_metrics_hostname', 'when': "{{ apisix_gateway_container_labels_metrics_enabled }}"}
 
 # We ensure it doesn't end with a slash, because we handle both (slash and no-slash).
 # Knowing that `apisix_gateway_path_prefix` does not end with a slash
