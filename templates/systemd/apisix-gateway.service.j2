@@ -28,34 +28,34 @@ ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_s
 	> failed to update nginx.conf: failed to open file: /usr/local/apisix/conf/nginx.conf, error info:/usr/local/apisix/conf/nginx.conf: Read-only file system
 #}
 ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
-			--rm \
-			--name={{ apisix_gateway_identifier }} \
-			--log-driver=none \
-			--cap-drop=ALL \
-			--hostname={{ apisix_gateway_container_hostname }} \
-			--network={{ apisix_gateway_container_network }} \
-			{% if apisix_gateway_container_gateway_http_bind_port %}
-			-p {{ apisix_gateway_container_gateway_http_bind_port }}:{{ apisix_gateway_config_apisix_node_listen }} \
-			{% endif %}
-			{% if apisix_gateway_container_control_http_bind_port and apisix_gateway_config_apisix_enable_control %}
-			-p {{ apisix_gateway_container_control_http_bind_port }}:{{ apisix_gateway_config_apisix_control_port }} \
-			{% endif %}
-			{% if apisix_gateway_container_admin_http_bind_port %}
-			-p {{ apisix_gateway_container_admin_http_bind_port }}:{{ apisix_gateway_config_deployment_admin_admin_listen_port }} \
-			{% endif %}
-			{% if apisix_gateway_container_metrics_http_bind_port %}
-			-p {{ apisix_gateway_container_metrics_http_bind_port }}:{{ apisix_gateway_config_plugin_attr_prometheus_export_addr_port }} \
-			{% endif %}
-			--env-file={{ apisix_gateway_base_path }}/env \
-			--label-file={{ apisix_gateway_base_path }}/labels \
-			--mount type=bind,src={{ apisix_gateway_config_path }}/config.yaml,dst=/usr/local/apisix/conf/config.yaml,ro \
-			{% for volume in apisix_gateway_container_additional_volumes %}
-			--mount type={{ volume.type | default('bind' if '/' in volume.src else 'volume') }},src={{ volume.src }},dst={{ volume.dst }}{{ (',' + volume.options) if volume.options | default('') else '' }} \
-			{% endfor %}
-			{% for arg in apisix_gateway_container_extra_arguments %}
-			{{ arg }} \
-			{% endfor %}
-			{{ apisix_gateway_container_image }}
+      --rm \
+      --name={{ apisix_gateway_identifier }} \
+      --log-driver=none \
+      --cap-drop=ALL \
+      --hostname={{ apisix_gateway_container_hostname }} \
+      --network={{ apisix_gateway_container_network }} \
+      {% if apisix_gateway_container_gateway_http_bind_port %}
+      -p {{ apisix_gateway_container_gateway_http_bind_port }}:{{ apisix_gateway_config_apisix_node_listen }} \
+      {% endif %}
+      {% if apisix_gateway_container_control_http_bind_port and apisix_gateway_config_apisix_enable_control %}
+      -p {{ apisix_gateway_container_control_http_bind_port }}:{{ apisix_gateway_config_apisix_control_port }} \
+      {% endif %}
+      {% if apisix_gateway_container_admin_http_bind_port %}
+      -p {{ apisix_gateway_container_admin_http_bind_port }}:{{ apisix_gateway_config_deployment_admin_admin_listen_port }} \
+      {% endif %}
+      {% if apisix_gateway_container_metrics_http_bind_port %}
+      -p {{ apisix_gateway_container_metrics_http_bind_port }}:{{ apisix_gateway_config_plugin_attr_prometheus_export_addr_port }} \
+      {% endif %}
+      --env-file={{ apisix_gateway_base_path }}/env \
+      --label-file={{ apisix_gateway_base_path }}/labels \
+      --mount type=bind,src={{ apisix_gateway_config_path }}/config.yaml,dst=/usr/local/apisix/conf/config.yaml,ro \
+      {% for volume in apisix_gateway_container_additional_volumes %}
+      --mount type={{ volume.type | default('bind' if '/' in volume.src else 'volume') }},src={{ volume.src }},dst={{ volume.dst }}{{ (',' + volume.options) if volume.options | default('') else '' }} \
+      {% endfor %}
+      {% for arg in apisix_gateway_container_extra_arguments %}
+      {{ arg }} \
+      {% endfor %}
+      {{ apisix_gateway_container_image }}
 
 {% for network in apisix_gateway_container_additional_networks %}
 ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} network connect {{ network }} {{ apisix_gateway_identifier }}
