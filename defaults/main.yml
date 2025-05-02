@@ -16,6 +16,7 @@ apisix_gateway_identifier: apisix-gateway
 apisix_gateway_base_path: "/{{ apisix_gateway_identifier }}"
 apisix_gateway_config_path: "{{ apisix_gateway_base_path }}/config"
 
+# renovate: datasource=docker depName=apache/apisix versioning=semver
 apisix_gateway_version: 3.8.0
 
 apisix_gateway_uid: ''
