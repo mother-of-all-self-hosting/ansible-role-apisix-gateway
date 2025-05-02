@@ -13,23 +13,22 @@
 apisix_gateway_enabled: true
 
 apisix_gateway_identifier: apisix-gateway
+apisix_gateway_base_path: "/{{ apisix_gateway_identifier }}"
+apisix_gateway_config_path: "{{ apisix_gateway_base_path }}/config"
+
+apisix_gateway_version: 3.8.0
 
 apisix_gateway_uid: ''
 apisix_gateway_gid: ''
 
-apisix_gateway_version: 3.8.0
-
-apisix_gateway_scheme: https
-
 # The hostname at which APISIX serves its API gateway
 apisix_gateway_hostname: ''
+
+apisix_gateway_scheme: https
 
 # The path at which APISIX serves its API gateway.
 # This value must either be `/` or not end with a slash (e.g. `/apisix`).
 apisix_gateway_path_prefix: /
-
-apisix_gateway_base_path: "/{{ apisix_gateway_identifier }}"
-apisix_gateway_config_path: "{{ apisix_gateway_base_path }}/config"
 
 apisix_gateway_container_image: "{{ apisix_gateway_container_image_registry_prefix }}apache/apisix:{{ apisix_gateway_container_image_tag }}"
 apisix_gateway_container_image_tag: "{{ apisix_gateway_version }}-debian"
@@ -37,19 +36,6 @@ apisix_gateway_container_image_registry_prefix: "{{ apisix_gateway_container_ima
 apisix_gateway_container_image_registry_prefix_upstream: "{{ apisix_gateway_container_image_registry_prefix_upstream_default }}"
 apisix_gateway_container_image_registry_prefix_upstream_default: docker.io/
 apisix_gateway_container_image_force_pull: "{{ apisix_gateway_container_image.endswith(':latest') }}"
-
-# Contains the hostname of the container
-apisix_gateway_container_hostname: "{{ apisix_gateway_hostname }}"
-
-# The base container network. It will be auto-created by this role if it doesn't exist already.
-apisix_gateway_container_network: "{{ apisix_gateway_identifier }}"
-
-# A list of additional container networks that the container would be connected to.
-# The role does not create these networks, so make sure they already exist.
-# Use this to expose this container to another reverse proxy, which runs in a different container network.
-apisix_gateway_container_additional_networks: "{{ apisix_gateway_container_additional_networks_auto + apisix_gateway_container_additional_networks_custom }}"
-apisix_gateway_container_additional_networks_auto: []
-apisix_gateway_container_additional_networks_custom: []
 
 # Specifies how the container publishes its HTTP port for the gateway service.
 #
@@ -78,6 +64,34 @@ apisix_gateway_container_admin_http_bind_port: ''
 #
 # Takes an "<ip>:<port>" value (e.g. "127.0.0.1:9091"), just a port number or an empty string to not expose.
 apisix_gateway_container_metrics_http_bind_port: ''
+
+# Contains the hostname of the container
+apisix_gateway_container_hostname: "{{ apisix_gateway_hostname }}"
+
+# The base container network. It will be auto-created by this role if it doesn't exist already.
+apisix_gateway_container_network: "{{ apisix_gateway_identifier }}"
+
+# A list of additional container networks that the container would be connected to.
+# The role does not create these networks, so make sure they already exist.
+# Use this to expose this container to another reverse proxy, which runs in a different container network.
+apisix_gateway_container_additional_networks: "{{ apisix_gateway_container_additional_networks_auto + apisix_gateway_container_additional_networks_custom }}"
+apisix_gateway_container_additional_networks_auto: []
+apisix_gateway_container_additional_networks_custom: []
+
+# A list of additional "volumes" to mount in the container.
+#
+# See the `--mount` documentation for the `docker run` command.
+#
+# Example:
+# apisix_gateway_container_additional_volumes:
+#   - type: bind
+#     src: /path/on/the/host
+#     dst: /data
+#   - type: bind
+#     src: /another-path/on/the/host
+#     dst: /read-only
+#     options: readonly
+apisix_gateway_container_additional_volumes: []
 
 # apisix_gateway_container_labels_traefik_enabled controls whether labels to assist a Traefik reverse-proxy will be attached to the container.
 # See `../templates/labels.j2` for details.
@@ -152,26 +166,17 @@ apisix_gateway_container_labels_metrics_middleware_basic_auth_users: ''
 #   another.label="here"
 apisix_gateway_container_labels_additional_labels: ''
 
-# A list of additional "volumes" to mount in the container.
-#
-# See the `--mount` documentation for the `docker run` command.
-#
-# Example:
-# apisix_gateway_container_additional_volumes:
-#   - type: bind
-#     src: /path/on/the/host
-#     dst: /data
-#   - type: bind
-#     src: /another-path/on/the/host
-#     dst: /read-only
-#     options: readonly
-apisix_gateway_container_additional_volumes: []
-
 # A list of extra arguments to pass to the container
 apisix_gateway_container_extra_arguments: []
 
-# Additional environment variables.
-apisix_gateway_environment_variables_additional_variables: ''
+# List of systemd services that the APISIX Gateway systemd service depends on
+apisix_gateway_systemd_required_services_list: "{{ apisix_gateway_systemd_required_services_list_default + apisix_gateway_systemd_required_services_list_auto + apisix_gateway_systemd_required_services_list_custom }}"
+apisix_gateway_systemd_required_services_list_default: "{{ [devture_systemd_docker_base_docker_service_name] if devture_systemd_docker_base_docker_service_name else [] }}"
+apisix_gateway_systemd_required_services_list_auto: []
+apisix_gateway_systemd_required_services_list_custom: []
+
+# List of systemd services that the APISIX Gateway systemd service wants
+apisix_gateway_systemd_wanted_services_list: []
 
 # Controls the `apisix.node_listen` configuration property
 apisix_gateway_config_apisix_node_listen: 9080
@@ -287,11 +292,5 @@ apisix_gateway_config_extension: "{{ apisix_gateway_config_extension_yaml | from
 # You most likely don't need to touch this variable. Instead, see `apisix_gateway_config_yaml`.
 apisix_gateway_config: "{{ apisix_gateway_config_yaml | from_yaml | combine(apisix_gateway_config_extension, recursive=True) }}"
 
-# List of systemd services that the APISIX Gateway systemd service depends on
-apisix_gateway_systemd_required_services_list: "{{ apisix_gateway_systemd_required_services_list_default + apisix_gateway_systemd_required_services_list_auto + apisix_gateway_systemd_required_services_list_custom }}"
-apisix_gateway_systemd_required_services_list_default: "{{ [devture_systemd_docker_base_docker_service_name] if devture_systemd_docker_base_docker_service_name else [] }}"
-apisix_gateway_systemd_required_services_list_auto: []
-apisix_gateway_systemd_required_services_list_custom: []
-
-# List of systemd services that the APISIX Gateway systemd service wants
-apisix_gateway_systemd_wanted_services_list: []
+# Additional environment variables.
+apisix_gateway_environment_variables_additional_variables: ''
