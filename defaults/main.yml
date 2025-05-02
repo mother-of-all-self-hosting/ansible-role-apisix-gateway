@@ -292,3 +292,6 @@ apisix_gateway_systemd_required_services_list: "{{ apisix_gateway_systemd_requir
 apisix_gateway_systemd_required_services_list_default: "{{ [devture_systemd_docker_base_docker_service_name] if devture_systemd_docker_base_docker_service_name else [] }}"
 apisix_gateway_systemd_required_services_list_auto: []
 apisix_gateway_systemd_required_services_list_custom: []
+
+# List of systemd services that the APISIX Gateway systemd service wants
+apisix_gateway_systemd_wanted_services_list: []
