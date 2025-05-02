@@ -287,8 +287,8 @@ apisix_gateway_config_extension: "{{ apisix_gateway_config_extension_yaml | from
 # You most likely don't need to touch this variable. Instead, see `apisix_gateway_config_yaml`.
 apisix_gateway_config: "{{ apisix_gateway_config_yaml | from_yaml | combine(apisix_gateway_config_extension, recursive=True) }}"
 
-# List of systemd services that apisix.service depends on
-apisix_gateway_systemd_required_services_list: "{{ apisix_gateway_systemd_required_systemd_services_list_default + apisix_gateway_systemd_required_systemd_services_list_auto + apisix_gateway_systemd_required_systemd_services_list_custom }}"
-apisix_gateway_systemd_required_systemd_services_list_default: ['docker.service']
-apisix_gateway_systemd_required_systemd_services_list_auto: []
-apisix_gateway_systemd_required_systemd_services_list_custom: []
+# List of systemd services that the APISIX Gateway systemd service depends on
+apisix_gateway_systemd_required_services_list: "{{ apisix_gateway_systemd_required_services_list_default + apisix_gateway_systemd_required_services_list_auto + apisix_gateway_systemd_required_services_list_custom }}"
+apisix_gateway_systemd_required_services_list_default: "{{ [devture_systemd_docker_base_docker_service_name] if devture_systemd_docker_base_docker_service_name else [] }}"
+apisix_gateway_systemd_required_services_list_auto: []
+apisix_gateway_systemd_required_services_list_custom: []
