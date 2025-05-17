@@ -23,7 +23,7 @@
         path: "{{ devture_systemd_docker_base_systemd_path }}/{{ apisix_gateway_identifier }}.service"
         state: absent
 
-    - name: Ensure APISIX Gateway path doesn't exist
+    - name: Ensure APISIX Gateway path does not exist
       ansible.builtin.file:
         path: "{{ apisix_gateway_base_path }}"
         state: absent
