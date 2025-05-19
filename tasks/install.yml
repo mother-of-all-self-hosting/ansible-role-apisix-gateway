@@ -15,7 +15,7 @@
     - "{{ apisix_gateway_base_path }}"
     - "{{ apisix_gateway_config_path }}"
 
-- name: Ensure APISIX Gateway config installed
+- name: Ensure APISIX Gateway configuration file installed
   ansible.builtin.copy:
     content: "{{ apisix_gateway_config | to_nice_yaml(indent=2, width=999999) }}"
     dest: "{{ apisix_gateway_config_path }}/config.yaml"
@@ -56,3 +56,4 @@
   ansible.builtin.template:
     src: "{{ role_path }}/templates/systemd/apisix-gateway.service.j2"
     dest: "{{ devture_systemd_docker_base_systemd_path }}/{{ apisix_gateway_identifier }}.service"
+    mode: 0644
