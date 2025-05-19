@@ -1,14 +1,17 @@
-# SPDX-FileCopyrightText: 2024 Slavi Pantaleev
+# SPDX-FileCopyrightText: 2023 - 2024 Slavi Pantaleev
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 ---
 
-- block:
-    - when: apisix_gateway_enabled | bool
+- name: Perform APISIX Gateway installation tasks
+  block:
+    - name: Validate APISIX Gateway configuration
+      when: apisix_gateway_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/validate_config.yml"
 
-    - when: apisix_gateway_enabled | bool
+    - name: Install APISIX Gateway
+      when: apisix_gateway_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/install.yml"
   tags:
     - setup-all
@@ -16,8 +19,10 @@
     - install-all
     - install-apisix-gateway
 
-- block:
-    - when: not apisix_gateway_enabled | bool
+- name: Perform APISIX Gateway uninstallation tasks
+  block:
+    - name: Uninstall APISIX Gateway
+      when: not apisix_gateway_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/uninstall.yml"
   tags:
     - setup-all
