@@ -4,6 +4,7 @@
 
 ---
 - name: Perform APISIX Gateway installation tasks
+  when: apisix_gateway_enabled | bool
   tags:
     - setup-all
     - setup-apisix-gateway
@@ -11,17 +12,15 @@
     - install-apisix-gateway
   block:
     - name: Validate APISIX Gateway configuration
-      when: apisix_gateway_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/validate_config.yml"
     - name: Install APISIX Gateway
-      when: apisix_gateway_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/install.yml"
 
 - name: Perform APISIX Gateway uninstallation tasks
+  when: not apisix_gateway_enabled | bool
   tags:
     - setup-all
     - setup-apisix-gateway
   block:
     - name: Uninstall APISIX Gateway
-      when: not apisix_gateway_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/uninstall.yml"
