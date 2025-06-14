@@ -22,9 +22,9 @@ ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_s
 ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} rm {{ apisix_gateway_identifier }} 2>/dev/null || true'
 
 {#
-	Cannot use `--read-only` with this service, nor `--user=..`, because it fails. Logs:
-	> /usr/local/openresty//luajit/bin/luajit ./apisix/cli/apisix.lua init
-	> failed to update nginx.conf: failed to open file: /usr/local/apisix/conf/nginx.conf, error info:/usr/local/apisix/conf/nginx.conf: Read-only file system
+  Cannot use `--read-only` with this service, nor `--user=..`, because it fails. Logs:
+  > /usr/local/openresty//luajit/bin/luajit ./apisix/cli/apisix.lua init
+  > failed to update nginx.conf: failed to open file: /usr/local/apisix/conf/nginx.conf, error info:/usr/local/apisix/conf/nginx.conf: Read-only file system
 #}
 ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
       --rm \
