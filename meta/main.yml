@@ -3,7 +3,7 @@ galaxy_info:
   author: mash
   company: mash
   role_name: apisix_gateway
-  namespace: etkecc_gateway
+  namespace: etkecc
   description: APISIX gateway
   platforms:
     - name: Debian
