@@ -18,11 +18,11 @@ apisix_gateway_config_path: "{{ apisix_gateway_base_path }}/config"
 # renovate: datasource=docker depName=apache/apisix versioning=semver
 apisix_gateway_version: 3.8.0
 
-apisix_gateway_uid: ''
-apisix_gateway_gid: ''
+apisix_gateway_uid: ""
+apisix_gateway_gid: ""
 
 # The hostname at which APISIX serves its API gateway
-apisix_gateway_hostname: ''
+apisix_gateway_hostname: ""
 
 apisix_gateway_scheme: https
 
@@ -42,28 +42,28 @@ apisix_gateway_container_image_force_pull: "{{ apisix_gateway_container_image.en
 # Related to `apisix_gateway_config_apisix_node_listen`
 #
 # Takes an "<ip>:<port>" value (e.g. "127.0.0.1:9080"), just a port number or an empty string to not expose.
-apisix_gateway_container_gateway_http_bind_port: ''
+apisix_gateway_container_gateway_http_bind_port: ""
 
 # Specifies how the container publishes its HTTP port for the control service.
 #
 # Related to `apisix_gateway_config_apisix_control_port` and `apisix_gateway_config_apisix_enable_control`
 #
 # Takes an "<ip>:<port>" value (e.g. "127.0.0.1:9092"), just a port number or an empty string to not expose.
-apisix_gateway_container_control_http_bind_port: ''
+apisix_gateway_container_control_http_bind_port: ""
 
 # Specifies how the container publishes its HTTP port for the admin service.
 #
 # Related to `apisix_gateway_config_deployment_admin_admin_listen_port`.
 #
 # Takes an "<ip>:<port>" value (e.g. "127.0.0.1:9180"), just a port number or an empty string to not expose.
-apisix_gateway_container_admin_http_bind_port: ''
+apisix_gateway_container_admin_http_bind_port: ""
 
 # Specifies how the container publishes its HTTP port for the admin service.
 #
 # Related to `apisix_gateway_config_plugin_attr_prometheus_export_addr_port`.
 #
 # Takes an "<ip>:<port>" value (e.g. "127.0.0.1:9091"), just a port number or an empty string to not expose.
-apisix_gateway_container_metrics_http_bind_port: ''
+apisix_gateway_container_metrics_http_bind_port: ""
 
 # Contains the hostname of the container
 apisix_gateway_container_hostname: "{{ apisix_gateway_hostname }}"
@@ -149,7 +149,7 @@ apisix_gateway_container_labels_metrics_tls: "{{ apisix_gateway_container_labels
 apisix_gateway_container_labels_metrics_tls_certResolver: "{{ apisix_gateway_container_labels_traefik_tls_certResolver }}"  # noqa var-naming
 apisix_gateway_container_labels_metrics_middleware_basic_auth_enabled: false
 # See: https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/basicauth/
-apisix_gateway_container_labels_metrics_middleware_basic_auth_users: ''
+apisix_gateway_container_labels_metrics_middleware_basic_auth_users: ""
 
 # apisix_gateway_container_labels_additional_labels contains a multiline string with additional labels to add to the container label file.
 # See `../templates/labels.j2` for details.
@@ -253,10 +253,10 @@ apisix_gateway_config_deployment_etcd_prefix: /apisix
 apisix_gateway_config_deployment_etcd_timeout: 30
 
 # Controls the `apisix.deployment.etcd.user` configuration property.
-apisix_gateway_config_deployment_etcd_user: ''
+apisix_gateway_config_deployment_etcd_user: ""
 
 # Controls the `apisix.deployment.etcd.password` configuration property.
-apisix_gateway_config_deployment_etcd_password: ''
+apisix_gateway_config_deployment_etcd_password: ""
 
 # Controls the `plugin_attr.prometheus.export_addr.ip` configuration property.
 apisix_gateway_config_plugin_attr_prometheus_export_addr_ip: '0.0.0.0'
@@ -298,4 +298,4 @@ apisix_gateway_config_extension: "{{ apisix_gateway_config_extension_yaml | from
 apisix_gateway_config: "{{ apisix_gateway_config_yaml | from_yaml | combine(apisix_gateway_config_extension, recursive=True) }}"
 
 # Additional environment variables.
-apisix_gateway_environment_variables_additional_variables: ''
+apisix_gateway_environment_variables_additional_variables: ""
