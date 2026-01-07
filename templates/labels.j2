@@ -202,4 +202,6 @@ traefik.http.routers.{{ apisix_gateway_identifier }}-metrics.tls.certResolver={{
 
 {% endif %}
 
-{{ apisix_gateway_container_labels_additional_labels }}
+{% for arg in apisix_gateway_container_labels_additional_labels %}
+{{ arg }}
+{% endfor %}

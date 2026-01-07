@@ -157,11 +157,11 @@ apisix_gateway_container_labels_metrics_middleware_basic_auth_users: ""
 #
 # Example:
 # apisix_gateway_container_labels_additional_labels_custom: |
-#   my.label=1
-#   another.label="here"
-apisix_gateway_container_labels_additional_labels: "{{ apisix_gateway_container_labels_additional_labels_auto | combine(apisix_gateway_container_labels_additional_labels_custom) }}"
-apisix_gateway_container_labels_additional_labels_auto: {}
-apisix_gateway_container_labels_additional_labels_custom: {}
+#   - my.label=1
+#   - another.label="here"
+apisix_gateway_container_labels_additional_labels: "{{ apisix_gateway_container_labels_additional_labels_auto + apisix_gateway_container_labels_additional_labels_custom }}"
+apisix_gateway_container_labels_additional_labels_auto: []
+apisix_gateway_container_labels_additional_labels_custom: []
 
 # A list of extra arguments to pass to the container (`docker create` command)
 apisix_gateway_container_extra_arguments: "{{ apisix_gateway_container_extra_arguments_auto + apisix_gateway_container_extra_arguments_custom }}"
