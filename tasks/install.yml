@@ -14,14 +14,6 @@
     - "{{ apisix_gateway_base_path }}"
     - "{{ apisix_gateway_config_path }}"
 
-- name: Ensure APISIX Gateway configuration file installed
-  ansible.builtin.copy:
-    content: "{{ apisix_gateway_config | to_nice_yaml(indent=2, width=999999) }}"
-    dest: "{{ apisix_gateway_config_path }}/config.yaml"
-    mode: "0644"
-    owner: "{{ apisix_gateway_uid }}"
-    group: "{{ apisix_gateway_gid }}"
-
 - name: Ensure APISIX Gateway support files installed
   ansible.builtin.template:
     src: "{{ role_path }}/templates/{{ item }}.j2"
@@ -32,6 +24,14 @@
   with_items:
     - env
     - labels
+
+- name: Ensure APISIX Gateway configuration file installed
+  ansible.builtin.copy:
+    content: "{{ apisix_gateway_config | to_nice_yaml(indent=2, width=999999) }}"
+    dest: "{{ apisix_gateway_config_path }}/config.yaml"
+    mode: "0644"
+    owner: "{{ apisix_gateway_uid }}"
+    group: "{{ apisix_gateway_gid }}"
 
 - name: Ensure APISIX Gateway container image is pulled via community.docker.docker_image
   when: devture_systemd_docker_base_container_image_pull_method == 'ansible-module'
