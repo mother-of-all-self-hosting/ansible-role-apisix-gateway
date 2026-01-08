@@ -156,7 +156,7 @@ apisix_gateway_container_labels_metrics_middleware_basic_auth_users: ""
 # To add your own custom labels, use `apisix_gateway_container_labels_additional_labels_custom`
 #
 # Example:
-# apisix_gateway_container_labels_additional_labels_custom: |
+# apisix_gateway_container_labels_additional_labels_custom:
 #   - my.label=1
 #   - another.label="here"
 apisix_gateway_container_labels_additional_labels: "{{ apisix_gateway_container_labels_additional_labels_auto + apisix_gateway_container_labels_additional_labels_custom }}"
