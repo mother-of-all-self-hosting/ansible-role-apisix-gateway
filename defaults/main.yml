@@ -21,10 +21,11 @@ apisix_gateway_version: 3.8.0
 apisix_gateway_uid: ""
 apisix_gateway_gid: ""
 
-# The hostname at which APISIX serves its API gateway
-apisix_gateway_hostname: ""
-
+# The scheme used for serving APISIX API gateway.
 apisix_gateway_scheme: https
+
+# The hostname at which APISIX serves its API gateway.
+apisix_gateway_hostname: ""
 
 # The path at which APISIX serves its API gateway.
 # This value must either be `/` or not end with a slash (e.g. `/apisix`).
