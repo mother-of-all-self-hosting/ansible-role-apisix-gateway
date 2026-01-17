@@ -41,32 +41,32 @@ apisix_gateway_container_image_force_pull: "{{ apisix_gateway_container_image.en
 # The base container network. It will be auto-created by this role if it doesn't exist already.
 apisix_gateway_container_network: "{{ apisix_gateway_identifier }}"
 
-# Specifies how the container publishes its HTTP port for the gateway service.
+# Specify how the container publishes its HTTP port for the gateway service.
 #
 # Related to `apisix_gateway_config_apisix_node_listen`
 #
-# Takes an "<ip>:<port>" value (e.g. "127.0.0.1:9080"), just a port number or an empty string to not expose.
+# Takes an "<ip>:<port>" or "<port>" value (e.g. "127.0.0.1:9080"), just a port number or an empty string to not expose.
 apisix_gateway_container_gateway_http_bind_port: ""
 
-# Specifies how the container publishes its HTTP port for the control service.
+# Specify how the container publishes its HTTP port for the control service.
 #
 # Related to `apisix_gateway_config_apisix_control_port` and `apisix_gateway_config_apisix_enable_control`
 #
-# Takes an "<ip>:<port>" value (e.g. "127.0.0.1:9092"), just a port number or an empty string to not expose.
+# Takes an "<ip>:<port>" or "<port>" value (e.g. "127.0.0.1:9092"), just a port number or an empty string to not expose.
 apisix_gateway_container_control_http_bind_port: ""
 
-# Specifies how the container publishes its HTTP port for the admin service.
+# Specify how the container publishes its HTTP port for the admin service.
 #
 # Related to `apisix_gateway_config_deployment_admin_admin_listen_port`.
 #
-# Takes an "<ip>:<port>" value (e.g. "127.0.0.1:9180"), just a port number or an empty string to not expose.
+# Takes an "<ip>:<port>" or "<port>" value (e.g. "127.0.0.1:9180"), just a port number or an empty string to not expose.
 apisix_gateway_container_admin_http_bind_port: ""
 
-# Specifies how the container publishes its HTTP port for the admin service.
+# Specify how the container publishes its HTTP port for the admin service.
 #
 # Related to `apisix_gateway_config_plugin_attr_prometheus_export_addr_port`.
 #
-# Takes an "<ip>:<port>" value (e.g. "127.0.0.1:9091"), just a port number or an empty string to not expose.
+# Takes an "<ip>:<port>" or "<port>" value (e.g. "127.0.0.1:9091"), just a port number or an empty string to not expose.
 apisix_gateway_container_metrics_http_bind_port: ""
 
 # Contains the hostname of the container
