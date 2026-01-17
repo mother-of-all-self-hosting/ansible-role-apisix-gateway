@@ -38,6 +38,9 @@ apisix_gateway_container_image_registry_prefix_upstream: "{{ apisix_gateway_cont
 apisix_gateway_container_image_registry_prefix_upstream_default: docker.io/
 apisix_gateway_container_image_force_pull: "{{ apisix_gateway_container_image.endswith(':latest') }}"
 
+# The base container network. It will be auto-created by this role if it doesn't exist already.
+apisix_gateway_container_network: "{{ apisix_gateway_identifier }}"
+
 # Specifies how the container publishes its HTTP port for the gateway service.
 #
 # Related to `apisix_gateway_config_apisix_node_listen`
@@ -68,9 +71,6 @@ apisix_gateway_container_metrics_http_bind_port: ""
 
 # Contains the hostname of the container
 apisix_gateway_container_hostname: "{{ apisix_gateway_hostname }}"
-
-# The base container network. It will be auto-created by this role if it doesn't exist already.
-apisix_gateway_container_network: "{{ apisix_gateway_identifier }}"
 
 # A list of additional container networks that the container would be connected to.
 # The role does not create these networks, so make sure they already exist.
