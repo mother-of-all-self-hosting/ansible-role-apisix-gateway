@@ -41,6 +41,9 @@ apisix_gateway_container_image_force_pull: "{{ apisix_gateway_container_image.en
 # The base container network. It will be auto-created by this role if it doesn't exist already.
 apisix_gateway_container_network: "{{ apisix_gateway_identifier }}"
 
+# Control if the container network is deleted on uninstalling.
+apisix_gateway_container_network_deletion_enabled: true
+
 # Specify how the container publishes its HTTP port for the gateway service.
 #
 # Related to `apisix_gateway_config_apisix_node_listen`
