@@ -36,7 +36,6 @@ apisix_gateway_container_image_tag: "{{ apisix_gateway_version }}-debian"
 apisix_gateway_container_image_registry_prefix: "{{ apisix_gateway_container_image_registry_prefix_upstream }}"
 apisix_gateway_container_image_registry_prefix_upstream: "{{ apisix_gateway_container_image_registry_prefix_upstream_default }}"
 apisix_gateway_container_image_registry_prefix_upstream_default: docker.io/
-apisix_gateway_container_image_force_pull: "{{ apisix_gateway_container_image.endswith(':latest') }}"
 
 # The base container network. It will be auto-created by this role if it doesn't exist already.
 apisix_gateway_container_network: "{{ apisix_gateway_identifier }}"
