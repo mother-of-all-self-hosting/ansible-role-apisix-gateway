@@ -1,0 +1,53 @@
+# SPDX-FileCopyrightText: 2026 Suguru Hirahara
+# SPDX-FileCopyrightText: 2026 spatterlight
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+---
+- name: Verify APISIX Gateway systemd service
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Wait for APISIX Gateway service to become active (up to 180s)
+      ansible.builtin.systemd:
+        name: apisix-gateway.service
+      register: apisix_gateway_service
+      until: apisix_gateway_service.status.ActiveState == 'active'
+      retries: 36
+      delay: 5
+
+    - name: Assert APISIX Gateway service is active
+      ansible.builtin.assert:
+        that: apisix_gateway_service.status.ActiveState == 'active'
+        fail_msg: "apisix-gateway.service not active ({{ apisix_gateway_service.status.ActiveState }})"
+        success_msg: "apisix-gateway.service is active"
+
+    - name: Retrieve APISIX Gateway service log for debugging
+      when: apisix_gateway_debug_service_enabled | bool
+      ansible.builtin.command:
+        cmd: journalctl -xeu apisix-gateway.service
+      changed_when: false
+
+    - name: Wait for APISIX Gateway HTTP endpoint to respond (up to 10m)
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:9092/v1/healthcheck"
+        method: GET
+        status_code: [200, 302]
+        follow_redirects: none
+      register: apisix_gateway_endpoint
+      until: apisix_gateway_endpoint.status in [200, 302]
+      retries: 120
+      delay: 5
+
+    - name: Assert APISIX Gateway HTTP endpoint responds
+      ansible.builtin.assert:
+        that: apisix_gateway_endpoint.status in [200, 302]
+        fail_msg: "APISIX Gateway did not respond as expected ({{ apisix_gateway_endpoint.status | default('no response') }})"
+        success_msg: "APISIX Gateway responded with {{ apisix_gateway_endpoint.status }}"
+
+    - name: Show APISIX Gateway systemd service status summary
+      ansible.builtin.debug:
+        msg:
+          - "APISIX Gateway systemd: {{ apisix_gateway_service.status.ActiveState }}"
+          - "APISIX Gateway HTTP: {{ apisix_gateway_endpoint.status }}"
