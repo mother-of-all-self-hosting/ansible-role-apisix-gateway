@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: 2026 Suguru Hirahara
 # SPDX-FileCopyrightText: 2026 spatterlight
+# SPDX-FileCopyrightText: 2026 Slavi Pantaleev
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -31,6 +32,31 @@ provisioner:
         # Helper variables
         apisix_gateway_debug_service_enabled: false
 
+        # Names for the containers that verify.yml starts by hand. They embed
+        # both the role and the scenario, so that a scenario running next to
+        # another role's (APISIX Dashboard also runs an APISIX and an etcd)
+        # cannot collide with it on a shared Docker daemon.
+        apisix_gateway_molecule_whoami_identifier: apisix-gateway-molecule-default-whoami
+        apisix_gateway_molecule_standalone_identifier: apisix-gateway-molecule-default-standalone
+
+        # Ports on the host that the role publishes its four listeners on.
+        # The role leaves all of them unpublished by default (everything is
+        # meant to be reached through a reverse-proxy), so the scenario asks
+        # for them explicitly and thereby also covers the
+        # `apisix_gateway_container_*_http_bind_port` variables.
+        apisix_gateway_molecule_gateway_bind_port: 9080
+        apisix_gateway_molecule_admin_bind_port: 9180
+        apisix_gateway_molecule_control_bind_port: 9092
+        apisix_gateway_molecule_metrics_bind_port: 9091
+
+        # The host port the stock-image negative control publishes its admin
+        # listener on. Deliberately not one of the ports above - the role's own
+        # container holds those.
+        apisix_gateway_molecule_standalone_admin_bind_port: 19180
+
+        # The admin API key the scenario configures and probes with.
+        apisix_gateway_molecule_admin_key: molecule-admin-key
+
         # Variables for APISIX Gateway
         apisix_gateway_uid: 1000
         apisix_gateway_gid: 1000
@@ -38,14 +64,45 @@ provisioner:
         apisix_gateway_hostname: localhost
         apisix_gateway_container_labels_traefik_enabled: false
         apisix_gateway_container_labels_gateway_enabled: false
+
+        apisix_gateway_container_gateway_http_bind_port: "127.0.0.1:{{ apisix_gateway_molecule_gateway_bind_port }}"
+        apisix_gateway_container_admin_http_bind_port: "127.0.0.1:{{ apisix_gateway_molecule_admin_bind_port }}"
+        apisix_gateway_container_control_http_bind_port: "127.0.0.1:{{ apisix_gateway_molecule_control_bind_port }}"
+        apisix_gateway_container_metrics_http_bind_port: "127.0.0.1:{{ apisix_gateway_molecule_metrics_bind_port }}"
+
+        # APISIX's own default control port is 9090. Asking for a different one
+        # here means a control API answering on 9092 can only have got that
+        # port out of the config.yaml this role rendered.
         apisix_gateway_config_apisix_enable_control: true
-        apisix_gateway_container_control_http_bind_port: 9092
+        apisix_gateway_config_apisix_control_port: 9092
+
+        # APISIX serves Prometheus metrics from `/apisix/prometheus/metrics` by
+        # default. Pointing them at a path that no APISIX would serve on its own
+        # turns "metrics answer here" into proof that this variable reached the
+        # running process, and lets the default path double as a negative control.
+        apisix_gateway_config_plugin_attr_prometheus_export_uri: /molecule/metrics
+
         apisix_gateway_config_deployment_etcd_user: root
         apisix_gateway_config_deployment_etcd_password: "{{ etcd_environment_variable_etcd_root_password }}"
         apisix_gateway_config_deployment_admin_admin_key:
           - name: admin_username
-            key: API_KEY_SECRET
+            key: "{{ apisix_gateway_molecule_admin_key }}"
             role: admin
+
+        # Exercises the configuration extension mechanism, which is a separate
+        # code path from the variables above: this is merged over the rendered
+        # configuration by `apisix_gateway_config_extension` rather than written
+        # by templates/config.yaml.j2.
+        #
+        # `enable_admin_cors` is deliberately one the template does write, and
+        # whose role default is `true`, so that a passing test says the
+        # extension overrode a templated value rather than merely adding an
+        # untouched key. APISIX then stops sending `Access-Control-Allow-Origin`
+        # on Admin API responses, which is what verify.yml looks for.
+        apisix_gateway_config_extension_yaml: |
+          deployment:
+            admin:
+              enable_admin_cors: false
 
         # Variables required for APISIX Gateway to connect to the etcd instance
         apisix_gateway_config_deployment_etcd_host:
