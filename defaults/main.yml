@@ -15,6 +15,10 @@ apisix_gateway_identifier: apisix-gateway
 apisix_gateway_base_path: "/{{ apisix_gateway_identifier }}"
 apisix_gateway_config_path: "{{ apisix_gateway_base_path }}/config"
 
+# This must stay a bare three-part version - `apisix_gateway_container_image_tag`
+# appends `-debian` to it. apache/apisix publishes no bare version tags, so
+# .github/renovate.json additionally tells Renovate to extract the version out
+# of the `-debian` tags; that part cannot be spelled out in this annotation.
 # renovate: datasource=docker depName=apache/apisix versioning=semver
 apisix_gateway_version: 3.8.0
 

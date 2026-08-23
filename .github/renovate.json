@@ -2,5 +2,13 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "github>mother-of-all-self-hosting/renovate-config#v1.0.0"
+  ],
+  "packageRules": [
+    {
+      "description": "apache/apisix publishes no bare version tags at all - every release exists only as `3.18.0-debian`, `3.18.0-redhat`, `3.18.0-ubuntu` (and historically `-alpine`/`-centos`). `apisix_gateway_version` has to stay a bare three-part version, because `apisix_gateway_container_image_tag` appends `-debian` to it and `3.18.0-debian-debian` is not an image. Under the `semver` versioning of the annotation those suffixes parse as prerelease identifiers, so every candidate is filtered out as unstable and the dependency never receives an update - which is why it sat at 3.8.0 for its entire history. Extracting the version out of the `-debian` tags gives Renovate bare versions to compare `apisix_gateway_version` against, and rules the other flavors out structurally.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["apache/apisix"],
+      "extractVersion": "^(?<version>\\d+\\.\\d+\\.\\d+)-debian$"
+    }
   ]
 }
