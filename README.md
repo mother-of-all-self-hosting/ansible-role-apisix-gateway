@@ -39,7 +39,18 @@ There is nothing to install and nothing to enable: APISIX's `enable_admin_ui` se
 Reaching it, from least to most exposed:
 
 - **An SSH tunnel** — the safest option, and it needs no configuration change to this role at all beyond publishing the port on the loopback interface. Set `apisix_gateway_container_admin_http_bind_port: "127.0.0.1:9180"`, then run `ssh -L 9180:127.0.0.1:9180 you@your-server` from your machine and open <http://127.0.0.1:9180/ui/>. Nothing is exposed to the network.
-- **Through Traefik, with authentication** — set `apisix_gateway_container_labels_admin_enabled: true` and `apisix_gateway_container_labels_admin_hostname`, and add an authenticating middleware to `apisix_gateway_container_labels_admin_middlewares`. Read the warning above before doing this.
+- **Through Traefik, with authentication** — set `apisix_gateway_container_labels_admin_enabled: true` and `apisix_gateway_container_labels_admin_hostname`, and put an authenticating middleware in front of the route. This role has no dedicated variable for that (unlike the metrics route, which has `apisix_gateway_container_labels_metrics_middleware_basic_auth_*`), so declare the middleware yourself and reference it by name:
+
+  ```yaml
+  apisix_gateway_container_labels_additional_labels_custom:
+    # Generate the entry with `htpasswd -nb USERNAME PASSWORD`
+    - "traefik.http.middlewares.apisix-gateway-admin-auth.basicauth.users=someone:$apr1$..."
+
+  apisix_gateway_container_labels_admin_middlewares:
+    - apisix-gateway-admin-auth
+  ```
+
+  Read the warning above before doing this.
 
 If you expose the Admin API but do not want the console published along with it, set `apisix_gateway_config_deployment_admin_enable_admin_ui: false`. `/ui/` then returns a 404 while the Admin API keeps working on the same port.
 
