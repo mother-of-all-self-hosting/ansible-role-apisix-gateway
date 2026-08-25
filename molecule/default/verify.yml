@@ -69,7 +69,7 @@
     # role rendered.
     - name: Inspect the APISIX container
       ansible.builtin.command:
-        cmd: "docker inspect {{ apisix_defaults.apisix_identifier }}"
+        cmd: "docker container inspect {{ apisix_defaults.apisix_identifier }}"
       register: apisix_container_inspect
       changed_when: false
 
@@ -103,7 +103,7 @@
 
     - name: Give the stock APISIX container time to fail its startup (up to 30s)
       ansible.builtin.command:
-        cmd: "docker inspect {{ apisix_molecule_standalone_identifier }}"
+        cmd: "docker container inspect {{ apisix_molecule_standalone_identifier }}"
       register: apisix_standalone_inspect
       changed_when: false
       until: not (apisix_standalone_inspect.stdout | from_json)[0].State.Running
@@ -357,7 +357,7 @@
     # keeps that first lookup from being the failing one.
     - name: Wait for the whoami container to be running (up to 60s)
       ansible.builtin.command:
-        cmd: "docker inspect {{ apisix_molecule_whoami_identifier }}"
+        cmd: "docker container inspect {{ apisix_molecule_whoami_identifier }}"
       register: apisix_whoami_inspect
       changed_when: false
       until: (apisix_whoami_inspect.stdout | from_json)[0].State.Running
