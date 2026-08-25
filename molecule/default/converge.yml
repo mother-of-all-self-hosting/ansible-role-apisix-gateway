@@ -1,15 +1,16 @@
+# SPDX-FileCopyrightText: 2026 Slavi Pantaleev
 # SPDX-FileCopyrightText: 2026 spatterlight
 # SPDX-FileCopyrightText: 2026 Suguru Hirahara
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 ---
-- name: Include roles for APISIX Gateway Molecule tests
+- name: Include roles for APISIX Molecule tests
   hosts: all
   become: true
   gather_facts: true
   tasks:
-    - name: Include roles for APISIX Gateway Molecule tests
+    - name: Include roles for APISIX Molecule tests
       ansible.builtin.include_role:
         name: "{{ role_name }}"
         public: true
@@ -21,11 +22,22 @@
       loop_control:
         loop_var: role_name
 
-- name: Ensure APISIX Gateway service is started
+- name: Ensure APISIX service is started
   hosts: all
   become: true
   gather_facts: false
   tasks:
+    # The role is not included in this play, so its defaults are not in scope
+    # here. The unit is named after `apisix_identifier`, whose value is
+    # deliberately still `apisix-gateway` while the variables are not - reading
+    # it rather than restating it keeps this play right if that ever changes.
+    # Only literal leaf values may be read this way; include_vars does not
+    # render Jinja.
+    - name: Load the APISIX role defaults
+      ansible.builtin.include_vars:
+        file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
+        name: apisix_defaults
+
     - name: Ensure systemd daemon is reloaded
       ansible.builtin.systemd_service:
         daemon_reload: true
@@ -35,7 +47,7 @@
         name: etcd.service
         state: started
 
-    - name: Ensure APISIX Gateway systemd service is started
+    - name: Ensure APISIX systemd service is started
       ansible.builtin.systemd_service:
-        name: apisix-gateway.service
+        name: "{{ apisix_defaults.apisix_identifier }}.service"
         state: started

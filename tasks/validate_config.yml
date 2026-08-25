@@ -10,32 +10,32 @@
       Please change your configuration to rename the variable (`{{ item.old }}` -> `{{ item.new }}`).
   when: "lookup('ansible.builtin.varnames', ('^' + item.old + '$'), wantlist=True) | length > 0"
   with_items:
-    - { "old": "apisix_gateway_systemd_required_systemd_services_list_default", "new": "apisix_gateway_systemd_required_services_list_default" }
-    - { "old": "apisix_gateway_systemd_required_systemd_services_list_auto", "new": "apisix_gateway_systemd_required_services_list_auto" }
-    - { "old": "apisix_gateway_systemd_required_systemd_services_list_custom", "new": "apisix_gateway_systemd_required_services_list_custom" }
-    - { "old": "apisix_gateway_container_image_force_pull", "new": "<removed> (the new community.docker.docker_image_pull module handles this natively)" }
+    - { "old": "apisix_systemd_required_systemd_services_list_default", "new": "apisix_systemd_required_services_list_default" }
+    - { "old": "apisix_systemd_required_systemd_services_list_auto", "new": "apisix_systemd_required_services_list_auto" }
+    - { "old": "apisix_systemd_required_systemd_services_list_custom", "new": "apisix_systemd_required_services_list_custom" }
+    - { "old": "apisix_container_image_force_pull", "new": "<removed> (the new community.docker.docker_image_pull module handles this natively)" }
 
-- name: Fail if required APISIX Gateway settings not defined
+- name: Fail if required APISIX settings not defined
   ansible.builtin.fail:
     msg: >-
       You need to define a required configuration setting (`{{ item.name }}`).
   when: "item.when | bool and lookup('vars', item.name, default='') | string | length == 0"
   with_items:
-    - { "name": "apisix_gateway_identifier", "when": true }
-    - { "name": "apisix_gateway_uid", "when": true }
-    - { "name": "apisix_gateway_gid", "when": true }
-    - { "name": "apisix_gateway_hostname", "when": true }
-    - { "name": "apisix_gateway_path_prefix", "when": true }
-    - { "name": "apisix_gateway_container_network", "when": true }
-    - { "name": "apisix_gateway_container_labels_admin_hostname", "when": "{{ apisix_gateway_container_labels_admin_enabled }}" }
-    - { "name": "apisix_gateway_container_labels_control_hostname", "when": "{{ apisix_gateway_container_labels_control_enabled }}" }
-    - { "name": "apisix_gateway_container_labels_metrics_hostname", "when": "{{ apisix_gateway_container_labels_metrics_enabled }}" }
+    - { "name": "apisix_identifier", "when": true }
+    - { "name": "apisix_uid", "when": true }
+    - { "name": "apisix_gid", "when": true }
+    - { "name": "apisix_hostname", "when": true }
+    - { "name": "apisix_path_prefix", "when": true }
+    - { "name": "apisix_container_network", "when": true }
+    - { "name": "apisix_container_labels_admin_hostname", "when": "{{ apisix_container_labels_admin_enabled }}" }
+    - { "name": "apisix_container_labels_control_hostname", "when": "{{ apisix_container_labels_control_enabled }}" }
+    - { "name": "apisix_container_labels_metrics_hostname", "when": "{{ apisix_container_labels_metrics_enabled }}" }
 
 # We ensure it doesn't end with a slash, because we handle both (slash and no-slash).
-# Knowing that `apisix_gateway_path_prefix` does not end with a slash
+# Knowing that `apisix_path_prefix` does not end with a slash
 # ensures we know how to set these routes up without having to do "does it end with a slash" checks elsewhere.
-- name: Fail if apisix_gateway_path_prefix ends with a slash
+- name: Fail if apisix_path_prefix ends with a slash
   ansible.builtin.fail:
     msg: >-
-      apisix_gateway_path_prefix (`{{ apisix_gateway_path_prefix }}`) must either be `/` or not end with a slash (e.g. `/apisix`).
-  when: "apisix_gateway_path_prefix != '/' and apisix_gateway_path_prefix[-1] == '/'"
+      apisix_path_prefix (`{{ apisix_path_prefix }}`) must either be `/` or not end with a slash (e.g. `/apisix`).
+  when: "apisix_path_prefix != '/' and apisix_path_prefix[-1] == '/'"

@@ -2,9 +2,9 @@
 galaxy_info:
   author: mash
   company: mash
-  role_name: apisix_gateway
+  role_name: apisix
   namespace: mash
-  description: APISIX gateway
+  description: APISIX
   platforms:
     - name: Debian
       versions:

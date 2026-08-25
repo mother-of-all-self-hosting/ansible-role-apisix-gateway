@@ -47,7 +47,7 @@ Currently there is one testing scenario available.
 
 ### `default`
 
-Tests a standard APISIX Gateway installation.
+Tests a standard APISIX installation.
 
 ## Running
 

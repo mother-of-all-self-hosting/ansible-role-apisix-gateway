@@ -4,55 +4,55 @@ SPDX-FileCopyrightText: 2024 Slavi Pantaleev
 SPDX-License-Identifier: AGPL-3.0-or-later
 #}
 
-{% if apisix_gateway_container_labels_traefik_enabled %}
+{% if apisix_container_labels_traefik_enabled %}
 traefik.enable=true
 
-{% if apisix_gateway_container_labels_traefik_docker_network %}
-traefik.docker.network={{ apisix_gateway_container_labels_traefik_docker_network }}
+{% if apisix_container_labels_traefik_docker_network %}
+traefik.docker.network={{ apisix_container_labels_traefik_docker_network }}
 {% endif %}
 
-traefik.http.services.{{ apisix_gateway_identifier }}-gateway.loadbalancer.server.port={{ apisix_gateway_config_apisix_node_listen }}
-traefik.http.services.{{ apisix_gateway_identifier }}-control.loadbalancer.server.port={{ apisix_gateway_config_apisix_control_port }}
-traefik.http.services.{{ apisix_gateway_identifier }}-admin.loadbalancer.server.port={{ apisix_gateway_config_deployment_admin_admin_listen_port }}
-traefik.http.services.{{ apisix_gateway_identifier }}-metrics.loadbalancer.server.port={{ apisix_gateway_config_plugin_attr_prometheus_export_addr_port }}
+traefik.http.services.{{ apisix_identifier }}-gateway.loadbalancer.server.port={{ apisix_config_apisix_node_listen }}
+traefik.http.services.{{ apisix_identifier }}-control.loadbalancer.server.port={{ apisix_config_apisix_control_port }}
+traefik.http.services.{{ apisix_identifier }}-admin.loadbalancer.server.port={{ apisix_config_deployment_admin_admin_listen_port }}
+traefik.http.services.{{ apisix_identifier }}-metrics.loadbalancer.server.port={{ apisix_config_plugin_attr_prometheus_export_addr_port }}
 
-{% if apisix_gateway_container_labels_gateway_enabled %}
+{% if apisix_container_labels_gateway_enabled %}
 ############################################################
 #                                                          #
 # Gateway                                                  #
 #                                                          #
 ############################################################
 
-{% set middlewares = apisix_gateway_container_labels_gateway_middlewares %}
+{% set middlewares = apisix_container_labels_gateway_middlewares %}
 
-{% if apisix_gateway_container_labels_gateway_path_prefix != '/' %}
-traefik.http.middlewares.{{ apisix_gateway_identifier }}-gateway-slashless-redirect.redirectregex.regex=^({{ apisix_gateway_container_labels_gateway_path_prefix | quote }})$
-traefik.http.middlewares.{{ apisix_gateway_identifier }}-gateway-slashless-redirect.redirectregex.replacement=${1}/
-{% set middlewares = middlewares + [apisix_gateway_identifier + '-gateway-slashless-redirect'] %}
+{% if apisix_container_labels_gateway_path_prefix != '/' %}
+traefik.http.middlewares.{{ apisix_identifier }}-gateway-slashless-redirect.redirectregex.regex=^({{ apisix_container_labels_gateway_path_prefix | quote }})$
+traefik.http.middlewares.{{ apisix_identifier }}-gateway-slashless-redirect.redirectregex.replacement=${1}/
+{% set middlewares = middlewares + [apisix_identifier + '-gateway-slashless-redirect'] %}
 {% endif %}
 
-{% if apisix_gateway_container_labels_gateway_path_prefix != '/' %}
-traefik.http.middlewares.{{ apisix_gateway_identifier }}-gateway-strip-prefix.stripprefix.prefixes={{ apisix_gateway_container_labels_gateway_path_prefix }}
-{% set middlewares = middlewares + [apisix_gateway_identifier + '-gateway-strip-prefix'] %}
+{% if apisix_container_labels_gateway_path_prefix != '/' %}
+traefik.http.middlewares.{{ apisix_identifier }}-gateway-strip-prefix.stripprefix.prefixes={{ apisix_container_labels_gateway_path_prefix }}
+{% set middlewares = middlewares + [apisix_identifier + '-gateway-strip-prefix'] %}
 {% endif %}
 
-traefik.http.routers.{{ apisix_gateway_identifier }}-gateway.rule={{ apisix_gateway_container_labels_gateway_rule }}
+traefik.http.routers.{{ apisix_identifier }}-gateway.rule={{ apisix_container_labels_gateway_rule }}
 
-{% if apisix_gateway_container_labels_gateway_priority | int > 0 %}
-traefik.http.routers.{{ apisix_gateway_identifier }}-gateway.priority={{ apisix_gateway_container_labels_gateway_priority }}
+{% if apisix_container_labels_gateway_priority | int > 0 %}
+traefik.http.routers.{{ apisix_identifier }}-gateway.priority={{ apisix_container_labels_gateway_priority }}
 {% endif %}
 
-traefik.http.routers.{{ apisix_gateway_identifier }}-gateway.service={{ apisix_gateway_identifier }}-gateway
+traefik.http.routers.{{ apisix_identifier }}-gateway.service={{ apisix_identifier }}-gateway
 
 {% if middlewares | length > 0 %}
-traefik.http.routers.{{ apisix_gateway_identifier }}-gateway.middlewares={{ middlewares | join(',') }}
+traefik.http.routers.{{ apisix_identifier }}-gateway.middlewares={{ middlewares | join(',') }}
 {% endif %}
 
-traefik.http.routers.{{ apisix_gateway_identifier }}-gateway.entrypoints={{ apisix_gateway_container_labels_gateway_entrypoints }}
+traefik.http.routers.{{ apisix_identifier }}-gateway.entrypoints={{ apisix_container_labels_gateway_entrypoints }}
 
-traefik.http.routers.{{ apisix_gateway_identifier }}-gateway.tls={{ apisix_gateway_container_labels_gateway_tls | to_json }}
-{% if apisix_gateway_container_labels_gateway_tls %}
-traefik.http.routers.{{ apisix_gateway_identifier }}-gateway.tls.certResolver={{ apisix_gateway_container_labels_gateway_tls_certResolver }}
+traefik.http.routers.{{ apisix_identifier }}-gateway.tls={{ apisix_container_labels_gateway_tls | to_json }}
+{% if apisix_container_labels_gateway_tls %}
+traefik.http.routers.{{ apisix_identifier }}-gateway.tls.certResolver={{ apisix_container_labels_gateway_tls_certResolver }}
 {% endif %}
 
 ############################################################
@@ -63,43 +63,43 @@ traefik.http.routers.{{ apisix_gateway_identifier }}-gateway.tls.certResolver={{
 {% endif %}
 
 
-{% if apisix_gateway_container_labels_admin_enabled %}
+{% if apisix_container_labels_admin_enabled %}
 ############################################################
 #                                                          #
 # Admin                                                    #
 #                                                          #
 ############################################################
 
-{% set middlewares = apisix_gateway_container_labels_admin_middlewares %}
+{% set middlewares = apisix_container_labels_admin_middlewares %}
 
-{% if apisix_gateway_container_labels_admin_path_prefix != '/' %}
-traefik.http.middlewares.{{ apisix_gateway_identifier }}-admin-slashless-redirect.redirectregex.regex=^({{ apisix_gateway_container_labels_admin_path_prefix | quote }})$
-traefik.http.middlewares.{{ apisix_gateway_identifier }}-admin-slashless-redirect.redirectregex.replacement=${1}/
-{% set middlewares = middlewares + [apisix_gateway_identifier + '-admin-slashless-redirect'] %}
+{% if apisix_container_labels_admin_path_prefix != '/' %}
+traefik.http.middlewares.{{ apisix_identifier }}-admin-slashless-redirect.redirectregex.regex=^({{ apisix_container_labels_admin_path_prefix | quote }})$
+traefik.http.middlewares.{{ apisix_identifier }}-admin-slashless-redirect.redirectregex.replacement=${1}/
+{% set middlewares = middlewares + [apisix_identifier + '-admin-slashless-redirect'] %}
 {% endif %}
 
-{% if apisix_gateway_container_labels_admin_path_prefix != '/' %}
-traefik.http.middlewares.{{ apisix_gateway_identifier }}-admin-strip-prefix.stripprefix.prefixes={{ apisix_gateway_container_labels_admin_path_prefix }}
-{% set middlewares = middlewares + [apisix_gateway_identifier + '-admin-strip-prefix'] %}
+{% if apisix_container_labels_admin_path_prefix != '/' %}
+traefik.http.middlewares.{{ apisix_identifier }}-admin-strip-prefix.stripprefix.prefixes={{ apisix_container_labels_admin_path_prefix }}
+{% set middlewares = middlewares + [apisix_identifier + '-admin-strip-prefix'] %}
 {% endif %}
 
-traefik.http.routers.{{ apisix_gateway_identifier }}-admin.rule={{ apisix_gateway_container_labels_admin_rule }}
+traefik.http.routers.{{ apisix_identifier }}-admin.rule={{ apisix_container_labels_admin_rule }}
 
-{% if apisix_gateway_container_labels_admin_priority | int > 0 %}
-traefik.http.routers.{{ apisix_gateway_identifier }}-admin.priority={{ apisix_gateway_container_labels_admin_priority }}
+{% if apisix_container_labels_admin_priority | int > 0 %}
+traefik.http.routers.{{ apisix_identifier }}-admin.priority={{ apisix_container_labels_admin_priority }}
 {% endif %}
 
-traefik.http.routers.{{ apisix_gateway_identifier }}-admin.service={{ apisix_gateway_identifier }}-admin
+traefik.http.routers.{{ apisix_identifier }}-admin.service={{ apisix_identifier }}-admin
 
 {% if middlewares | length > 0 %}
-traefik.http.routers.{{ apisix_gateway_identifier }}-admin.middlewares={{ middlewares | join(',') }}
+traefik.http.routers.{{ apisix_identifier }}-admin.middlewares={{ middlewares | join(',') }}
 {% endif %}
 
-traefik.http.routers.{{ apisix_gateway_identifier }}-admin.entrypoints={{ apisix_gateway_container_labels_admin_entrypoints }}
+traefik.http.routers.{{ apisix_identifier }}-admin.entrypoints={{ apisix_container_labels_admin_entrypoints }}
 
-traefik.http.routers.{{ apisix_gateway_identifier }}-admin.tls={{ apisix_gateway_container_labels_admin_tls | to_json }}
-{% if apisix_gateway_container_labels_admin_tls %}
-traefik.http.routers.{{ apisix_gateway_identifier }}-admin.tls.certResolver={{ apisix_gateway_container_labels_admin_tls_certResolver }}
+traefik.http.routers.{{ apisix_identifier }}-admin.tls={{ apisix_container_labels_admin_tls | to_json }}
+{% if apisix_container_labels_admin_tls %}
+traefik.http.routers.{{ apisix_identifier }}-admin.tls.certResolver={{ apisix_container_labels_admin_tls_certResolver }}
 {% endif %}
 
 ############################################################
@@ -110,43 +110,43 @@ traefik.http.routers.{{ apisix_gateway_identifier }}-admin.tls.certResolver={{ a
 {% endif %}
 
 
-{% if apisix_gateway_container_labels_control_enabled %}
+{% if apisix_container_labels_control_enabled %}
 ############################################################
 #                                                          #
 # Control                                                  #
 #                                                          #
 ############################################################
 
-{% set middlewares = apisix_gateway_container_labels_control_middlewares %}
+{% set middlewares = apisix_container_labels_control_middlewares %}
 
-{% if apisix_gateway_container_labels_control_path_prefix != '/' %}
-traefik.http.middlewares.{{ apisix_gateway_identifier }}-control-slashless-redirect.redirectregex.regex=^({{ apisix_gateway_container_labels_control_path_prefix | quote }})$
-traefik.http.middlewares.{{ apisix_gateway_identifier }}-control-slashless-redirect.redirectregex.replacement=${1}/
-{% set middlewares = middlewares + [apisix_gateway_identifier + '-control-slashless-redirect'] %}
+{% if apisix_container_labels_control_path_prefix != '/' %}
+traefik.http.middlewares.{{ apisix_identifier }}-control-slashless-redirect.redirectregex.regex=^({{ apisix_container_labels_control_path_prefix | quote }})$
+traefik.http.middlewares.{{ apisix_identifier }}-control-slashless-redirect.redirectregex.replacement=${1}/
+{% set middlewares = middlewares + [apisix_identifier + '-control-slashless-redirect'] %}
 {% endif %}
 
-{% if apisix_gateway_container_labels_control_path_prefix != '/' %}
-traefik.http.middlewares.{{ apisix_gateway_identifier }}-control-strip-prefix.stripprefix.prefixes={{ apisix_gateway_container_labels_control_path_prefix }}
-{% set middlewares = middlewares + [apisix_gateway_identifier + '-control-strip-prefix'] %}
+{% if apisix_container_labels_control_path_prefix != '/' %}
+traefik.http.middlewares.{{ apisix_identifier }}-control-strip-prefix.stripprefix.prefixes={{ apisix_container_labels_control_path_prefix }}
+{% set middlewares = middlewares + [apisix_identifier + '-control-strip-prefix'] %}
 {% endif %}
 
-traefik.http.routers.{{ apisix_gateway_identifier }}-control.rule={{ apisix_gateway_container_labels_control_rule }}
+traefik.http.routers.{{ apisix_identifier }}-control.rule={{ apisix_container_labels_control_rule }}
 
-{% if apisix_gateway_container_labels_control_priority | int > 0 %}
-traefik.http.routers.{{ apisix_gateway_identifier }}-control.priority={{ apisix_gateway_container_labels_control_priority }}
+{% if apisix_container_labels_control_priority | int > 0 %}
+traefik.http.routers.{{ apisix_identifier }}-control.priority={{ apisix_container_labels_control_priority }}
 {% endif %}
 
-traefik.http.routers.{{ apisix_gateway_identifier }}-control.service={{ apisix_gateway_identifier }}-control
+traefik.http.routers.{{ apisix_identifier }}-control.service={{ apisix_identifier }}-control
 
 {% if middlewares | length > 0 %}
-traefik.http.routers.{{ apisix_gateway_identifier }}-control.middlewares={{ middlewares | join(',') }}
+traefik.http.routers.{{ apisix_identifier }}-control.middlewares={{ middlewares | join(',') }}
 {% endif %}
 
-traefik.http.routers.{{ apisix_gateway_identifier }}-control.entrypoints={{ apisix_gateway_container_labels_control_entrypoints }}
+traefik.http.routers.{{ apisix_identifier }}-control.entrypoints={{ apisix_container_labels_control_entrypoints }}
 
-traefik.http.routers.{{ apisix_gateway_identifier }}-control.tls={{ apisix_gateway_container_labels_control_tls | to_json }}
-{% if apisix_gateway_container_labels_control_tls %}
-traefik.http.routers.{{ apisix_gateway_identifier }}-control.tls.certResolver={{ apisix_gateway_container_labels_control_tls_certResolver }}
+traefik.http.routers.{{ apisix_identifier }}-control.tls={{ apisix_container_labels_control_tls | to_json }}
+{% if apisix_container_labels_control_tls %}
+traefik.http.routers.{{ apisix_identifier }}-control.tls.certResolver={{ apisix_container_labels_control_tls_certResolver }}
 {% endif %}
 
 ############################################################
@@ -157,40 +157,40 @@ traefik.http.routers.{{ apisix_gateway_identifier }}-control.tls.certResolver={{
 {% endif %}
 
 
-{% if apisix_gateway_container_labels_metrics_enabled %}
+{% if apisix_container_labels_metrics_enabled %}
 ############################################################
 #                                                          #
 # Metrics                                                  #
 #                                                          #
 ############################################################
 
-{% set middlewares = apisix_gateway_container_labels_metrics_middlewares %}
+{% set middlewares = apisix_container_labels_metrics_middlewares %}
 
-{% if apisix_gateway_container_labels_metrics_middleware_basic_auth_enabled %}
-traefik.http.middlewares.{{ apisix_gateway_identifier }}-metrics-basic-auth.basicauth.users={{ apisix_gateway_container_labels_metrics_middleware_basic_auth_users }}
-{% set middlewares = middlewares + [apisix_gateway_identifier + '-metrics-basic-auth'] %}
+{% if apisix_container_labels_metrics_middleware_basic_auth_enabled %}
+traefik.http.middlewares.{{ apisix_identifier }}-metrics-basic-auth.basicauth.users={{ apisix_container_labels_metrics_middleware_basic_auth_users }}
+{% set middlewares = middlewares + [apisix_identifier + '-metrics-basic-auth'] %}
 {% endif %}
 
-traefik.http.middlewares.{{ apisix_gateway_identifier }}-metrics-replace-path.replacepath.path={{ apisix_gateway_config_plugin_attr_prometheus_export_uri }}
-{% set middlewares = middlewares + [apisix_gateway_identifier + '-metrics-replace-path'] %}
+traefik.http.middlewares.{{ apisix_identifier }}-metrics-replace-path.replacepath.path={{ apisix_config_plugin_attr_prometheus_export_uri }}
+{% set middlewares = middlewares + [apisix_identifier + '-metrics-replace-path'] %}
 
-traefik.http.routers.{{ apisix_gateway_identifier }}-metrics.rule={{ apisix_gateway_container_labels_metrics_rule }}
+traefik.http.routers.{{ apisix_identifier }}-metrics.rule={{ apisix_container_labels_metrics_rule }}
 
-{% if apisix_gateway_container_labels_metrics_priority | int > 0 %}
-traefik.http.routers.{{ apisix_gateway_identifier }}-metrics.priority={{ apisix_gateway_container_labels_metrics_priority }}
+{% if apisix_container_labels_metrics_priority | int > 0 %}
+traefik.http.routers.{{ apisix_identifier }}-metrics.priority={{ apisix_container_labels_metrics_priority }}
 {% endif %}
 
-traefik.http.routers.{{ apisix_gateway_identifier }}-metrics.service={{ apisix_gateway_identifier }}-metrics
+traefik.http.routers.{{ apisix_identifier }}-metrics.service={{ apisix_identifier }}-metrics
 
 {% if middlewares | length > 0 %}
-traefik.http.routers.{{ apisix_gateway_identifier }}-metrics.middlewares={{ middlewares | join(',') }}
+traefik.http.routers.{{ apisix_identifier }}-metrics.middlewares={{ middlewares | join(',') }}
 {% endif %}
 
-traefik.http.routers.{{ apisix_gateway_identifier }}-metrics.entrypoints={{ apisix_gateway_container_labels_metrics_entrypoints }}
+traefik.http.routers.{{ apisix_identifier }}-metrics.entrypoints={{ apisix_container_labels_metrics_entrypoints }}
 
-traefik.http.routers.{{ apisix_gateway_identifier }}-metrics.tls={{ apisix_gateway_container_labels_metrics_tls | to_json }}
-{% if apisix_gateway_container_labels_metrics_tls %}
-traefik.http.routers.{{ apisix_gateway_identifier }}-metrics.tls.certResolver={{ apisix_gateway_container_labels_metrics_tls_certResolver }}
+traefik.http.routers.{{ apisix_identifier }}-metrics.tls={{ apisix_container_labels_metrics_tls | to_json }}
+{% if apisix_container_labels_metrics_tls %}
+traefik.http.routers.{{ apisix_identifier }}-metrics.tls.certResolver={{ apisix_container_labels_metrics_tls_certResolver }}
 {% endif %}
 
 ############################################################
@@ -202,6 +202,6 @@ traefik.http.routers.{{ apisix_gateway_identifier }}-metrics.tls.certResolver={{
 
 {% endif %}
 
-{% for arg in apisix_gateway_container_labels_additional_labels %}
+{% for arg in apisix_container_labels_additional_labels %}
 {{ arg }}
 {% endfor %}

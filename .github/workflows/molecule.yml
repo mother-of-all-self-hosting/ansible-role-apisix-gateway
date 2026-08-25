@@ -54,25 +54,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7.0.0
         with:
-          path: apisix-gateway
+          path: apisix
 
       - name: Set up Python
         uses: actions/setup-python@v6.3.0
         with:
-          python-version-file: apisix-gateway/.python-version
+          python-version-file: apisix/.python-version
           cache: pip
-          cache-dependency-path: apisix-gateway/molecule/requirements.txt
+          cache-dependency-path: apisix/molecule/requirements.txt
 
       - name: Install Python dependencies
-        working-directory: apisix-gateway
+        working-directory: apisix
         run: pip install -r molecule/requirements.txt
 
       - name: Cache Ansible collections
         uses: actions/cache@v6.1.0
         with:
           path: ~/.ansible/collections
-          key: ansible-collections-${{ hashFiles('apisix-gateway/molecule/default/requirements.yml') }}
+          key: ansible-collections-${{ hashFiles('apisix/molecule/default/requirements.yml') }}
 
       - name: Run Molecule
-        working-directory: apisix-gateway
+        working-directory: apisix
         run: molecule test --scenario-name ${{ matrix.scenario }}

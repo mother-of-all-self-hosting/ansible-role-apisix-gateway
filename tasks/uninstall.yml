@@ -4,46 +4,46 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 ---
-- name: Check existence of APISIX Gateway systemd service
+- name: Check existence of APISIX systemd service
   ansible.builtin.stat:
-    path: "{{ devture_systemd_docker_base_systemd_path }}/{{ apisix_gateway_identifier }}.service"
-  register: apisix_gateway_service_stat
+    path: "{{ devture_systemd_docker_base_systemd_path }}/{{ apisix_identifier }}.service"
+  register: apisix_service_stat
 
-- name: Uninstall APISIX Gateway systemd services and files
-  when: apisix_gateway_service_stat.stat.exists | bool
+- name: Uninstall APISIX systemd services and files
+  when: apisix_service_stat.stat.exists | bool
   block:
-    - name: Ensure APISIX Gateway systemd service is stopped
+    - name: Ensure APISIX systemd service is stopped
       ansible.builtin.service:
-        name: "{{ apisix_gateway_identifier }}"
+        name: "{{ apisix_identifier }}"
         state: stopped
         enabled: false
         daemon_reload: true
 
-    - name: Ensure APISIX Gateway systemd service does not exist
+    - name: Ensure APISIX systemd service does not exist
       ansible.builtin.file:
-        path: "{{ devture_systemd_docker_base_systemd_path }}/{{ apisix_gateway_identifier }}.service"
+        path: "{{ devture_systemd_docker_base_systemd_path }}/{{ apisix_identifier }}.service"
         state: absent
 
-    - name: Ensure APISIX Gateway container network does not exist
-      when: apisix_gateway_container_network_deletion_enabled
+    - name: Ensure APISIX container network does not exist
+      when: apisix_container_network_deletion_enabled
       block:
-        - name: Ensure APISIX Gateway container network does not exist via community.docker.docker_network
+        - name: Ensure APISIX container network does not exist via community.docker.docker_network
           when: devture_systemd_docker_base_container_network_creation_method == 'ansible-module'
           community.docker.docker_network:
-            name: "{{ apisix_gateway_container_network }}"
+            name: "{{ apisix_container_network }}"
             state: absent
-          register: apisix_gateway_network_deletion_result
+          register: apisix_network_deletion_result
 
-        - name: Ensure APISIX Gateway container network does not exist via ansible.builtin.command
+        - name: Ensure APISIX container network does not exist via ansible.builtin.command
           when: devture_systemd_docker_base_container_network_creation_method == 'command'
           ansible.builtin.command:
             cmd: >-
               {{ devture_systemd_docker_base_host_command_docker }} network rm
-              {{ apisix_gateway_container_network }}
-          register: apisix_gateway_network_deletion_result
-          changed_when: apisix_gateway_container_network in apisix_gateway_network_deletion_result.stdout
+              {{ apisix_container_network }}
+          register: apisix_network_deletion_result
+          changed_when: apisix_container_network in apisix_network_deletion_result.stdout
 
-    - name: Ensure APISIX Gateway path does not exist
+    - name: Ensure APISIX path does not exist
       ansible.builtin.file:
-        path: "{{ apisix_gateway_base_path }}"
+        path: "{{ apisix_base_path }}"
         state: absent

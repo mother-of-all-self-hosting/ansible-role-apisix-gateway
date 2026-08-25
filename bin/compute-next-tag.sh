@@ -38,10 +38,10 @@ role_defining_paths=(
 	'templates'
 )
 
-# Keyed on the literal `apisix_gateway_version` assignment, never on
-# `apisix_gateway_container_image_tag` - the latter is a Jinja expression
-# (`{{ apisix_gateway_version }}-debian`) that this script cannot evaluate.
-version="$(sed -nE 's|^apisix_gateway_version:[[:space:]]*"?([^"[:space:]]+)"?.*$|\1|p' "$defaults_path" | head -n1)"
+# Keyed on the literal `apisix_version` assignment, never on
+# `apisix_container_image_tag` - the latter is a Jinja expression
+# (`{{ apisix_version }}-debian`) that this script cannot evaluate.
+version="$(sed -nE 's|^apisix_version:[[:space:]]*"?([^"[:space:]]+)"?.*$|\1|p' "$defaults_path" | head -n1)"
 
 if [ -z "$version" ]; then
 	echo >&2 "Could not determine the APISIX version from $defaults_path"
@@ -49,7 +49,7 @@ if [ -z "$version" ]; then
 fi
 
 # The existing tags carry a leading `v` while the version value does not
-# (`apisix_gateway_version: 3.8.0` -> `v3.8.0-0`). Stripping any `v` that the
+# (`apisix_version: 3.8.0` -> `v3.8.0-0`). Stripping any `v` that the
 # value might grow keeps it from being doubled in the tag.
 tag_prefix="v${version#v}-"
 

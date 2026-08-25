@@ -5,46 +5,48 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 ---
-- name: Verify APISIX Gateway
+- name: Verify APISIX
   hosts: all
   become: true
   gather_facts: false
 
   vars:
-    apisix_gateway_molecule_gateway_url: "http://127.0.0.1:{{ apisix_gateway_molecule_gateway_bind_port }}"
-    apisix_gateway_molecule_admin_url: "http://127.0.0.1:{{ apisix_gateway_molecule_admin_bind_port }}/apisix/admin"
-    apisix_gateway_molecule_control_url: "http://127.0.0.1:{{ apisix_gateway_molecule_control_bind_port }}"
-    apisix_gateway_molecule_metrics_url: "http://127.0.0.1:{{ apisix_gateway_molecule_metrics_bind_port }}"
+    apisix_molecule_gateway_url: "http://127.0.0.1:{{ apisix_molecule_gateway_bind_port }}"
+    apisix_molecule_admin_url: "http://127.0.0.1:{{ apisix_molecule_admin_bind_port }}/apisix/admin"
+    apisix_molecule_control_url: "http://127.0.0.1:{{ apisix_molecule_control_bind_port }}"
+    apisix_molecule_metrics_url: "http://127.0.0.1:{{ apisix_molecule_metrics_bind_port }}"
 
   tasks:
     # Role defaults are not in scope in a verify playbook, but the version that
     # Renovate bumps lives in them and is what the running process is checked
-    # against below. Only literal leaf values may be read this way - include_vars
-    # does not render Jinja, so anything derived (the image reference, the
-    # configuration) would come back as an unevaluated template string.
-    - name: Load the APISIX Gateway role defaults
+    # against below, and so does `apisix_identifier`, which names the systemd
+    # unit and the container. Only literal leaf values may be read this way -
+    # include_vars does not render Jinja, so anything derived (the image
+    # reference, the configuration) would come back as an unevaluated template
+    # string.
+    - name: Load the APISIX role defaults
       ansible.builtin.include_vars:
         file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
-        name: apisix_gateway_defaults
+        name: apisix_defaults
 
-    - name: Wait for APISIX Gateway service to become active (up to 180s)
+    - name: Wait for APISIX service to become active (up to 180s)
       ansible.builtin.systemd:
-        name: apisix-gateway.service
-      register: apisix_gateway_service
-      until: apisix_gateway_service.status.ActiveState == 'active'
+        name: "{{ apisix_defaults.apisix_identifier }}.service"
+      register: apisix_service
+      until: apisix_service.status.ActiveState == 'active'
       retries: 36
       delay: 5
 
-    - name: Assert APISIX Gateway service is active
+    - name: Assert APISIX service is active
       ansible.builtin.assert:
-        that: apisix_gateway_service.status.ActiveState == 'active'
-        fail_msg: "apisix-gateway.service not active ({{ apisix_gateway_service.status.ActiveState }})"
-        success_msg: "apisix-gateway.service is active"
+        that: apisix_service.status.ActiveState == 'active'
+        fail_msg: "{{ apisix_defaults.apisix_identifier }}.service not active ({{ apisix_service.status.ActiveState }})"
+        success_msg: "{{ apisix_defaults.apisix_identifier }}.service is active"
 
-    - name: Retrieve APISIX Gateway service log for debugging
-      when: apisix_gateway_debug_service_enabled | bool
+    - name: Retrieve APISIX service log for debugging
+      when: apisix_debug_service_enabled | bool
       ansible.builtin.command:
-        cmd: journalctl -xeu apisix-gateway.service
+        cmd: "journalctl -xeu {{ apisix_defaults.apisix_identifier }}.service"
       changed_when: false
 
     ############################################################
@@ -65,10 +67,10 @@
     # from the role's variables, so that the negative control is guaranteed to
     # be the very same image and the only difference is the configuration this
     # role rendered.
-    - name: Inspect the APISIX Gateway container
+    - name: Inspect the APISIX container
       ansible.builtin.command:
-        cmd: docker inspect apisix-gateway
-      register: apisix_gateway_container_inspect
+        cmd: "docker inspect {{ apisix_defaults.apisix_identifier }}"
+      register: apisix_container_inspect
       changed_when: false
 
     # Both are read off the running container rather than restated here. The
@@ -79,40 +81,40 @@
     # it is also attached to.
     - name: Determine the image and the container network the role used
       ansible.builtin.set_fact:
-        apisix_gateway_molecule_image: "{{ (apisix_gateway_container_inspect.stdout | from_json)[0].Config.Image }}"
-        apisix_gateway_molecule_network: "{{ (apisix_gateway_container_inspect.stdout | from_json)[0].HostConfig.NetworkMode }}"
+        apisix_molecule_image: "{{ (apisix_container_inspect.stdout | from_json)[0].Config.Image }}"
+        apisix_molecule_network: "{{ (apisix_container_inspect.stdout | from_json)[0].HostConfig.NetworkMode }}"
 
     - name: Remove any leftover stock APISIX container
       ansible.builtin.command:
-        cmd: "docker rm -f {{ apisix_gateway_molecule_standalone_identifier }}"
-      register: apisix_gateway_standalone_removal
-      changed_when: apisix_gateway_standalone_removal.rc == 0
+        cmd: "docker rm -f {{ apisix_molecule_standalone_identifier }}"
+      register: apisix_standalone_removal
+      changed_when: apisix_standalone_removal.rc == 0
       failed_when: false
 
     - name: Start a stock APISIX container with no configuration from this role
       ansible.builtin.command:
         cmd: >-
           docker run --detach
-          --name={{ apisix_gateway_molecule_standalone_identifier }}
-          --network={{ apisix_gateway_molecule_network }}
-          -p 127.0.0.1:{{ apisix_gateway_molecule_standalone_admin_bind_port }}:9180
-          {{ apisix_gateway_molecule_image }}
+          --name={{ apisix_molecule_standalone_identifier }}
+          --network={{ apisix_molecule_network }}
+          -p 127.0.0.1:{{ apisix_molecule_standalone_admin_bind_port }}:9180
+          {{ apisix_molecule_image }}
       changed_when: true
 
     - name: Give the stock APISIX container time to fail its startup (up to 30s)
       ansible.builtin.command:
-        cmd: "docker inspect {{ apisix_gateway_molecule_standalone_identifier }}"
-      register: apisix_gateway_standalone_inspect
+        cmd: "docker inspect {{ apisix_molecule_standalone_identifier }}"
+      register: apisix_standalone_inspect
       changed_when: false
-      until: not (apisix_gateway_standalone_inspect.stdout | from_json)[0].State.Running
+      until: not (apisix_standalone_inspect.stdout | from_json)[0].State.Running
       retries: 15
       delay: 2
 
     - name: Assert the stock APISIX container did not stay up
       ansible.builtin.assert:
         that:
-          - not (apisix_gateway_standalone_inspect.stdout | from_json)[0].State.Running
-          - (apisix_gateway_standalone_inspect.stdout | from_json)[0].State.ExitCode != 0
+          - not (apisix_standalone_inspect.stdout | from_json)[0].State.Running
+          - (apisix_standalone_inspect.stdout | from_json)[0].State.ExitCode != 0
         fail_msg: >-
           A stock APISIX container stayed up without this role's configuration -
           the probes below would no longer prove that the role is what makes
@@ -121,26 +123,26 @@
 
     - name: Probe the stock APISIX admin API with the admin key this role configures
       ansible.builtin.uri:
-        url: "http://127.0.0.1:{{ apisix_gateway_molecule_standalone_admin_bind_port }}/apisix/admin/routes"
+        url: "http://127.0.0.1:{{ apisix_molecule_standalone_admin_bind_port }}/apisix/admin/routes"
         method: GET
         headers:
-          X-API-KEY: "{{ apisix_gateway_molecule_admin_key }}"
+          X-API-KEY: "{{ apisix_molecule_admin_key }}"
         status_code: [200, 401, 403, 404, 500, 502, 503]
-      register: apisix_gateway_standalone_admin
+      register: apisix_standalone_admin
       failed_when: false
 
     - name: Assert the stock APISIX admin API does not answer the role's admin key
       ansible.builtin.assert:
-        that: apisix_gateway_standalone_admin.status | default(-1) != 200
+        that: apisix_standalone_admin.status | default(-1) != 200
         fail_msg: >-
           A stock APISIX answered the admin key this role configures
-          (status {{ apisix_gateway_standalone_admin.status | default('none') }}) - the
+          (status {{ apisix_standalone_admin.status | default('none') }}) - the
           admin probes below would then not be evidence of anything the role did.
         success_msg: "A stock APISIX does not answer the admin key this role configures"
 
     - name: Remove the stock APISIX container
       ansible.builtin.command:
-        cmd: "docker rm -f {{ apisix_gateway_molecule_standalone_identifier }}"
+        cmd: "docker rm -f {{ apisix_molecule_standalone_identifier }}"
       changed_when: true
 
     ############################################################
@@ -156,28 +158,28 @@
     # `status_code` has to name 404 explicitly. The uri module accepts only 200
     # by default, which would fail the task before the assert below ever ran,
     # and report it as a request failure rather than as the wrong status.
-    - name: Wait for the APISIX Gateway data plane to answer (up to 180s)
+    - name: Wait for the APISIX data plane to answer (up to 180s)
       ansible.builtin.uri:
-        url: "{{ apisix_gateway_molecule_gateway_url }}/"
+        url: "{{ apisix_molecule_gateway_url }}/"
         method: GET
         status_code: [200, 301, 302, 404, 502, 503]
         follow_redirects: none
         return_content: true
-      register: apisix_gateway_root
-      until: apisix_gateway_root.status == 404
+      register: apisix_root
+      until: apisix_root.status == 404
       retries: 36
       delay: 5
 
     - name: Assert the data plane answers with an APISIX-branded 404
       ansible.builtin.assert:
         that:
-          - apisix_gateway_root.status == 404
+          - apisix_root.status == 404
           # A literal substring, so `in` rather than `is search` - the latter
           # takes a regular expression, in which `.` would match anything.
-          - "'404 Route Not Found' in apisix_gateway_root.content"
+          - "'404 Route Not Found' in apisix_root.content"
         fail_msg: >-
           The data plane did not answer as APISIX
-          (status {{ apisix_gateway_root.status | default('none') }})
+          (status {{ apisix_root.status | default('none') }})
         success_msg: "The data plane answers unmatched requests with an APISIX-branded 404"
 
     ############################################################
@@ -186,62 +188,62 @@
     #                                                          #
     ############################################################
 
-    - name: Query the APISIX Gateway Admin API with the configured admin key
+    - name: Query the APISIX Admin API with the configured admin key
       ansible.builtin.uri:
-        url: "{{ apisix_gateway_molecule_admin_url }}/routes"
+        url: "{{ apisix_molecule_admin_url }}/routes"
         method: GET
         headers:
-          X-API-KEY: "{{ apisix_gateway_molecule_admin_key }}"
+          X-API-KEY: "{{ apisix_molecule_admin_key }}"
         status_code: [200, 401, 403, 404, 502, 503]
         return_content: true
-      register: apisix_gateway_admin_routes
-      until: apisix_gateway_admin_routes.status == 200
+      register: apisix_admin_routes
+      until: apisix_admin_routes.status == 200
       retries: 24
       delay: 5
 
     - name: Assert the Admin API accepts the configured admin key
       ansible.builtin.assert:
         that:
-          - apisix_gateway_admin_routes.status == 200
-          - "'list' in apisix_gateway_admin_routes.json"
+          - apisix_admin_routes.status == 200
+          - "'list' in apisix_admin_routes.json"
         fail_msg: >-
           The Admin API did not accept the configured admin key
-          (status {{ apisix_gateway_admin_routes.status | default('none') }})
-        success_msg: "The Admin API accepts the key from apisix_gateway_config_deployment_admin_admin_key"
+          (status {{ apisix_admin_routes.status | default('none') }})
+        success_msg: "The Admin API accepts the key from apisix_config_deployment_admin_admin_key"
 
     # templates/config.yaml.j2 writes `enable_admin_cors` from a variable whose
     # role default is `true`, and the scenario's
-    # `apisix_gateway_config_extension_yaml` overrides it to `false`. APISIX
+    # `apisix_config_extension_yaml` overrides it to `false`. APISIX
     # sends `Access-Control-Allow-Origin` on Admin API responses when the
     # setting is on, so its absence here is the extension merge - and its
     # precedence over the template - observed in the running process.
     - name: Assert the configuration extension overrode the templated value
       ansible.builtin.assert:
-        that: apisix_gateway_admin_routes.access_control_allow_origin is not defined
+        that: apisix_admin_routes.access_control_allow_origin is not defined
         fail_msg: >-
           The Admin API still sends Access-Control-Allow-Origin
-          ({{ apisix_gateway_admin_routes.access_control_allow_origin | default('') }}),
-          so `enable_admin_cors: false` from apisix_gateway_config_extension_yaml
+          ({{ apisix_admin_routes.access_control_allow_origin | default('') }}),
+          so `enable_admin_cors: false` from apisix_config_extension_yaml
           did not override what templates/config.yaml.j2 wrote
         success_msg: "The configuration extension overrode the templated enable_admin_cors"
 
     # The mirror image of the probe above. Without it, an APISIX that let
     # everybody through would pass just as happily as one that honors the key.
-    - name: Query the APISIX Gateway Admin API with a wrong admin key
+    - name: Query the APISIX Admin API with a wrong admin key
       ansible.builtin.uri:
-        url: "{{ apisix_gateway_molecule_admin_url }}/routes"
+        url: "{{ apisix_molecule_admin_url }}/routes"
         method: GET
         headers:
-          X-API-KEY: "{{ apisix_gateway_molecule_admin_key }}-wrong"
+          X-API-KEY: "{{ apisix_molecule_admin_key }}-wrong"
         status_code: [200, 401, 403, 404, 502, 503]
-      register: apisix_gateway_admin_wrong_key
+      register: apisix_admin_wrong_key
 
     - name: Assert the Admin API rejects a wrong admin key
       ansible.builtin.assert:
-        that: apisix_gateway_admin_wrong_key.status == 401
+        that: apisix_admin_wrong_key.status == 401
         fail_msg: >-
           The Admin API answered a wrong admin key with
-          {{ apisix_gateway_admin_wrong_key.status | default('none') }} instead of 401
+          {{ apisix_admin_wrong_key.status | default('none') }} instead of 401
         success_msg: "The Admin API rejects a wrong admin key with 401"
 
     ############################################################
@@ -261,33 +263,33 @@
     - name: Check that the image ships the bundled dashboard's assets
       ansible.builtin.command:
         cmd: >-
-          docker run --rm --entrypoint sh {{ apisix_gateway_molecule_image }}
+          docker run --rm --entrypoint sh {{ apisix_molecule_image }}
           -c "grep -q 'APISIX Dashboard' /usr/local/apisix/ui/index.html"
-      register: apisix_gateway_bundled_ui_assets
+      register: apisix_bundled_ui_assets
       changed_when: false
       failed_when: false
 
     - name: Assert the image ships the bundled dashboard's assets
       ansible.builtin.assert:
-        that: apisix_gateway_bundled_ui_assets.rc == 0
+        that: apisix_bundled_ui_assets.rc == 0
         fail_msg: >-
-          {{ apisix_gateway_molecule_image }} does not carry the bundled dashboard at
+          {{ apisix_molecule_image }} does not carry the bundled dashboard at
           /usr/local/apisix/ui/index.html, so the `/ui/` probes below would pass
           against an image that never had a UI to turn off.
         success_msg: "The image carries the bundled dashboard at /usr/local/apisix/ui/index.html"
 
-    # The scenario sets `apisix_gateway_config_deployment_admin_enable_admin_ui`
+    # The scenario sets `apisix_config_deployment_admin_enable_admin_ui`
     # to `false`, against both APISIX's default and this role's, so a 404 here
     # is that variable observed in the running process. `follow_redirects: none`
     # keeps `/ui` honest: with the setting on, APISIX answers it with a 301 to
     # `/ui/`, which the uri module would otherwise chase into a 200.
     - name: Probe the bundled dashboard on the Admin API port
       ansible.builtin.uri:
-        url: "http://127.0.0.1:{{ apisix_gateway_molecule_admin_bind_port }}{{ item }}"
+        url: "http://127.0.0.1:{{ apisix_molecule_admin_bind_port }}{{ item }}"
         method: GET
         status_code: [200, 301, 302, 401, 403, 404, 502, 503]
         follow_redirects: none
-      register: apisix_gateway_bundled_ui
+      register: apisix_bundled_ui
       loop:
         - /ui
         - /ui/
@@ -297,10 +299,10 @@
         that: item.status == 404
         fail_msg: >-
           {{ item.item }} answered {{ item.status | default('none') }} instead of 404,
-          so `apisix_gateway_config_deployment_admin_enable_admin_ui: false` did not
+          so `apisix_config_deployment_admin_enable_admin_ui: false` did not
           reach the running process
         success_msg: "{{ item.item }} answers 404 with enable_admin_ui turned off"
-      loop: "{{ apisix_gateway_bundled_ui.results }}"
+      loop: "{{ apisix_bundled_ui.results }}"
       loop_control:
         label: "{{ item.item }}"
 
@@ -309,10 +311,10 @@
     # must not have taken the Admin API down with it.
     - name: Assert the Admin API still answers on the port the UI was turned off on
       ansible.builtin.assert:
-        that: apisix_gateway_admin_routes.status == 200
+        that: apisix_admin_routes.status == 200
         fail_msg: >-
           Turning the bundled UI off also stopped the Admin API on port
-          {{ apisix_gateway_molecule_admin_bind_port }}
+          {{ apisix_molecule_admin_bind_port }}
         success_msg: "The Admin API keeps answering on the port the bundled UI was turned off on"
 
     ############################################################
@@ -333,17 +335,17 @@
     # would fail this playbook's syntax check.
     - name: Remove any leftover whoami container
       ansible.builtin.command:
-        cmd: "docker rm -f {{ apisix_gateway_molecule_whoami_identifier }}"
-      register: apisix_gateway_whoami_removal
-      changed_when: apisix_gateway_whoami_removal.rc == 0
+        cmd: "docker rm -f {{ apisix_molecule_whoami_identifier }}"
+      register: apisix_whoami_removal
+      changed_when: apisix_whoami_removal.rc == 0
       failed_when: false
 
-    - name: Start a whoami container on the APISIX Gateway container network
+    - name: Start a whoami container on the APISIX container network
       ansible.builtin.command:
         cmd: >-
           docker run --detach
-          --name={{ apisix_gateway_molecule_whoami_identifier }}
-          --network={{ apisix_gateway_molecule_network }}
+          --name={{ apisix_molecule_whoami_identifier }}
+          --network={{ apisix_molecule_network }}
           docker.io/traefik/whoami:latest
       changed_when: true
 
@@ -355,19 +357,19 @@
     # keeps that first lookup from being the failing one.
     - name: Wait for the whoami container to be running (up to 60s)
       ansible.builtin.command:
-        cmd: "docker inspect {{ apisix_gateway_molecule_whoami_identifier }}"
-      register: apisix_gateway_whoami_inspect
+        cmd: "docker inspect {{ apisix_molecule_whoami_identifier }}"
+      register: apisix_whoami_inspect
       changed_when: false
-      until: (apisix_gateway_whoami_inspect.stdout | from_json)[0].State.Running
+      until: (apisix_whoami_inspect.stdout | from_json)[0].State.Running
       retries: 12
       delay: 5
 
     - name: Publish a route to the whoami container through the Admin API
       ansible.builtin.uri:
-        url: "{{ apisix_gateway_molecule_admin_url }}/routes/molecule-whoami"
+        url: "{{ apisix_molecule_admin_url }}/routes/molecule-whoami"
         method: PUT
         headers:
-          X-API-KEY: "{{ apisix_gateway_molecule_admin_key }}"
+          X-API-KEY: "{{ apisix_molecule_admin_key }}"
         body_format: json
         body:
           uri: /molecule-whoami
@@ -381,42 +383,42 @@
             # without complaint - it is a syntactically fine hostname - and the
             # route then answers 503 for an upstream that can never resolve.
             nodes:
-              - host: "{{ apisix_gateway_molecule_whoami_identifier }}"
+              - host: "{{ apisix_molecule_whoami_identifier }}"
                 port: 80
                 weight: 1
         status_code: [200, 201, 400, 401, 403, 502, 503]
-      register: apisix_gateway_route_creation
+      register: apisix_route_creation
 
     - name: Assert the route was published
       ansible.builtin.assert:
-        that: apisix_gateway_route_creation.status in [200, 201]
+        that: apisix_route_creation.status in [200, 201]
         fail_msg: >-
           Publishing a route through the Admin API answered
-          {{ apisix_gateway_route_creation.status | default('none') }}
+          {{ apisix_route_creation.status | default('none') }}
         success_msg: "A route to the whoami container was published through the Admin API"
 
     - name: Request the published route through the data plane (up to 60s)
       ansible.builtin.uri:
-        url: "{{ apisix_gateway_molecule_gateway_url }}/molecule-whoami"
+        url: "{{ apisix_molecule_gateway_url }}/molecule-whoami"
         method: GET
         status_code: [200, 404, 502, 503]
         return_content: true
-      register: apisix_gateway_whoami_response
-      until: apisix_gateway_whoami_response.status == 200
+      register: apisix_whoami_response
+      until: apisix_whoami_response.status == 200
       retries: 24
       delay: 5
 
     - name: Assert the request was proxied to the whoami container
       ansible.builtin.assert:
         that:
-          - apisix_gateway_whoami_response.status == 200
-          - "'Hostname:' in apisix_gateway_whoami_response.content"
+          - apisix_whoami_response.status == 200
+          - "'Hostname:' in apisix_whoami_response.content"
           # Added by APISIX when it proxies, so it tells a genuinely proxied
           # answer apart from anything else that might serve a 200 on that path.
-          - "'X-Forwarded-For:' in apisix_gateway_whoami_response.content"
+          - "'X-Forwarded-For:' in apisix_whoami_response.content"
         fail_msg: >-
           The data plane did not proxy to the whoami container
-          (status {{ apisix_gateway_whoami_response.status | default('none') }})
+          (status {{ apisix_whoami_response.status | default('none') }})
         success_msg: "The data plane proxied the request to the whoami container"
 
     ############################################################
@@ -427,39 +429,39 @@
 
     # APISIX serves Prometheus metrics from `/apisix/prometheus/metrics` unless
     # told otherwise. The scenario points
-    # `apisix_gateway_config_plugin_attr_prometheus_export_uri` at a path no
+    # `apisix_config_plugin_attr_prometheus_export_uri` at a path no
     # APISIX would serve on its own, so metrics answering there - and the
     # default path answering 404 - is that variable observed in the process.
     - name: Fetch Prometheus metrics from the configured export URI
       ansible.builtin.uri:
-        url: "{{ apisix_gateway_molecule_metrics_url }}{{ apisix_gateway_config_plugin_attr_prometheus_export_uri }}"
+        url: "{{ apisix_molecule_metrics_url }}{{ apisix_config_plugin_attr_prometheus_export_uri }}"
         method: GET
         status_code: [200, 404, 502, 503]
         return_content: true
-      register: apisix_gateway_metrics
-      until: apisix_gateway_metrics.status == 200
+      register: apisix_metrics
+      until: apisix_metrics.status == 200
       retries: 12
       delay: 5
 
     - name: Fetch Prometheus metrics from the APISIX default export URI
       ansible.builtin.uri:
-        url: "{{ apisix_gateway_molecule_metrics_url }}/apisix/prometheus/metrics"
+        url: "{{ apisix_molecule_metrics_url }}/apisix/prometheus/metrics"
         method: GET
         status_code: [200, 404, 502, 503]
-      register: apisix_gateway_metrics_default_uri
+      register: apisix_metrics_default_uri
 
     - name: Assert metrics are served from the configured export URI only
       ansible.builtin.assert:
         that:
-          - apisix_gateway_metrics.status == 200
-          - "'apisix_node_info' in apisix_gateway_metrics.content"
-          - apisix_gateway_metrics_default_uri.status == 404
+          - apisix_metrics.status == 200
+          - "'apisix_node_info' in apisix_metrics.content"
+          - apisix_metrics_default_uri.status == 404
         fail_msg: >-
-          Metrics did not follow apisix_gateway_config_plugin_attr_prometheus_export_uri
-          (configured URI: {{ apisix_gateway_metrics.status | default('none') }},
-          APISIX default URI: {{ apisix_gateway_metrics_default_uri.status | default('none') }})
+          Metrics did not follow apisix_config_plugin_attr_prometheus_export_uri
+          (configured URI: {{ apisix_metrics.status | default('none') }},
+          APISIX default URI: {{ apisix_metrics_default_uri.status | default('none') }})
         success_msg: >-
-          Metrics are served from {{ apisix_gateway_config_plugin_attr_prometheus_export_uri }}
+          Metrics are served from {{ apisix_config_plugin_attr_prometheus_export_uri }}
           and not from the APISIX default
 
     ############################################################
@@ -474,24 +476,24 @@
     # control endpoint present across APISIX versions - it returns `{}` when no
     # health checks are configured, so nothing is read out of the body; the
     # claim is only that the configured port serves the Control API.
-    - name: Query the APISIX Gateway Control API on the configured port
+    - name: Query the APISIX Control API on the configured port
       ansible.builtin.uri:
-        url: "{{ apisix_gateway_molecule_control_url }}/v1/healthcheck"
+        url: "{{ apisix_molecule_control_url }}/v1/healthcheck"
         method: GET
         status_code: [200, 404, 502, 503]
-      register: apisix_gateway_control
-      until: apisix_gateway_control.status == 200
+      register: apisix_control
+      until: apisix_control.status == 200
       retries: 24
       delay: 5
 
     - name: Assert the Control API answers on the configured port
       ansible.builtin.assert:
-        that: apisix_gateway_control.status == 200
+        that: apisix_control.status == 200
         fail_msg: >-
           The Control API did not answer on port
-          {{ apisix_gateway_config_apisix_control_port }}
-          ({{ apisix_gateway_control.status | default('none') }})
-        success_msg: "The Control API answers on port {{ apisix_gateway_config_apisix_control_port }}"
+          {{ apisix_config_apisix_control_port }}
+          ({{ apisix_control.status | default('none') }})
+        success_msg: "The Control API answers on port {{ apisix_config_apisix_control_port }}"
 
     # APISIX puts its own version in the `Server` header of every response it
     # serves, so this is the running process reporting on itself over the wire -
@@ -504,31 +506,31 @@
     - name: Assert the running APISIX is the version this role installs
       ansible.builtin.assert:
         that:
-          - apisix_gateway_molecule_running_version | length > 0
+          - apisix_molecule_running_version | length > 0
           - >-
-            apisix_gateway_molecule_running_version
+            apisix_molecule_running_version
             ==
-            (apisix_gateway_defaults.apisix_gateway_version | string | regex_replace('^v', ''))
+            (apisix_defaults.apisix_version | string | regex_replace('^v', ''))
         fail_msg: >-
-          APISIX reports `{{ apisix_gateway_root.server | default('no Server header') }}`,
-          expected version {{ apisix_gateway_defaults.apisix_gateway_version }}
-        success_msg: "APISIX reports version {{ apisix_gateway_molecule_running_version }}"
+          APISIX reports `{{ apisix_root.server | default('no Server header') }}`,
+          expected version {{ apisix_defaults.apisix_version }}
+        success_msg: "APISIX reports version {{ apisix_molecule_running_version }}"
       vars:
-        apisix_gateway_molecule_running_version: >-
-          {{ apisix_gateway_root.server | default('') | regex_replace('^APISIX/', '') | regex_replace('^v', '') | trim }}
+        apisix_molecule_running_version: >-
+          {{ apisix_root.server | default('') | regex_replace('^APISIX/', '') | regex_replace('^v', '') | trim }}
 
     - name: Remove the whoami container
       ansible.builtin.command:
-        cmd: "docker rm -f {{ apisix_gateway_molecule_whoami_identifier }}"
+        cmd: "docker rm -f {{ apisix_molecule_whoami_identifier }}"
       changed_when: true
 
-    - name: Show APISIX Gateway verification summary
+    - name: Show APISIX verification summary
       ansible.builtin.debug:
         msg:
-          - "APISIX Gateway systemd: {{ apisix_gateway_service.status.ActiveState }}"
-          - "Running version (Server header): {{ apisix_gateway_root.server | default('unknown') }}"
-          - "Data plane (unmatched request): {{ apisix_gateway_root.status }}"
-          - "Admin API (configured key / wrong key): {{ apisix_gateway_admin_routes.status }} / {{ apisix_gateway_admin_wrong_key.status }}"
-          - "Bundled dashboard with enable_admin_ui off (/ui, /ui/): {{ apisix_gateway_bundled_ui.results | map(attribute='status') | join(', ') }}"
-          - "Routing to whoami through the data plane: {{ apisix_gateway_whoami_response.status }}"
-          - "Metrics (configured URI / APISIX default): {{ apisix_gateway_metrics.status }} / {{ apisix_gateway_metrics_default_uri.status }}"
+          - "APISIX systemd: {{ apisix_service.status.ActiveState }}"
+          - "Running version (Server header): {{ apisix_root.server | default('unknown') }}"
+          - "Data plane (unmatched request): {{ apisix_root.status }}"
+          - "Admin API (configured key / wrong key): {{ apisix_admin_routes.status }} / {{ apisix_admin_wrong_key.status }}"
+          - "Bundled dashboard with enable_admin_ui off (/ui, /ui/): {{ apisix_bundled_ui.results | map(attribute='status') | join(', ') }}"
+          - "Routing to whoami through the data plane: {{ apisix_whoami_response.status }}"
+          - "Metrics (configured URI / APISIX default): {{ apisix_metrics.status }} / {{ apisix_metrics_default_uri.status }}"

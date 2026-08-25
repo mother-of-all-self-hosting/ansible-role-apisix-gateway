@@ -3,24 +3,24 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 ---
-- name: Perform APISIX Gateway installation tasks
-  when: apisix_gateway_enabled | bool
+- name: Perform APISIX installation tasks
+  when: apisix_enabled | bool
   tags:
     - setup-all
-    - setup-apisix-gateway
+    - setup-apisix
     - install-all
-    - install-apisix-gateway
+    - install-apisix
   block:
-    - name: Validate APISIX Gateway configuration
+    - name: Validate APISIX configuration
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/validate_config.yml"
-    - name: Install APISIX Gateway
+    - name: Install APISIX
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/install.yml"
 
-- name: Perform APISIX Gateway uninstallation tasks
-  when: not apisix_gateway_enabled | bool
+- name: Perform APISIX uninstallation tasks
+  when: not apisix_enabled | bool
   tags:
     - setup-all
-    - setup-apisix-gateway
+    - setup-apisix
   block:
-    - name: Uninstall APISIX Gateway
+    - name: Uninstall APISIX
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/uninstall.yml"

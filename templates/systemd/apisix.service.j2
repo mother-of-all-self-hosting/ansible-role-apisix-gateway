@@ -1,0 +1,72 @@
+{#
+SPDX-FileCopyrightText: 2024 Slavi Pantaleev
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+#}
+
+[Unit]
+Description=APISIX ({{ apisix_identifier }})
+{% for service in apisix_systemd_required_services_list %}
+Requires={{ service }}
+After={{ service }}
+{% endfor %}
+{% for service in apisix_systemd_wanted_services_list %}
+Wants={{ service }}
+{% endfor %}
+DefaultDependencies=no
+
+[Service]
+Type=simple
+Environment="HOME={{ devture_systemd_docker_base_systemd_unit_home_path }}"
+ExecStartPre={{ devture_systemd_docker_base_host_command_sh }} -c '{{ apisix_container_cleanup_command | trim | replace("\n", " ") }}'
+
+{#
+  Cannot use `--read-only` with this service, nor `--user=..`, because it fails. Logs:
+  > /usr/local/openresty//luajit/bin/luajit ./apisix/cli/apisix.lua init
+  > failed to update nginx.conf: failed to open file: /usr/local/apisix/conf/nginx.conf, error info:/usr/local/apisix/conf/nginx.conf: Read-only file system
+#}
+ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
+      --rm \
+      --name={{ apisix_identifier }} \
+      --log-driver=none \
+      --cap-drop=ALL \
+      --hostname={{ apisix_container_hostname }} \
+      --network={{ apisix_container_network }} \
+      {% if apisix_container_gateway_http_bind_port %}
+      -p {{ apisix_container_gateway_http_bind_port }}:{{ apisix_config_apisix_node_listen }} \
+      {% endif %}
+      {% if apisix_container_control_http_bind_port and apisix_config_apisix_enable_control %}
+      -p {{ apisix_container_control_http_bind_port }}:{{ apisix_config_apisix_control_port }} \
+      {% endif %}
+      {% if apisix_container_admin_http_bind_port %}
+      -p {{ apisix_container_admin_http_bind_port }}:{{ apisix_config_deployment_admin_admin_listen_port }} \
+      {% endif %}
+      {% if apisix_container_metrics_http_bind_port %}
+      -p {{ apisix_container_metrics_http_bind_port }}:{{ apisix_config_plugin_attr_prometheus_export_addr_port }} \
+      {% endif %}
+      --env-file={{ apisix_base_path }}/env \
+      --label-file={{ apisix_base_path }}/labels \
+      --mount type=bind,src={{ apisix_config_path }}/config.yaml,dst=/usr/local/apisix/conf/config.yaml,ro \
+      {% for volume in apisix_container_additional_volumes %}
+      --mount type={{ volume.type | default('bind' if '/' in volume.src else 'volume') }},src={{ volume.src }},dst={{ volume.dst }}{{ (',' + volume.options) if volume.options | default('') else '' }} \
+      {% endfor %}
+      {% for arg in apisix_container_extra_arguments %}
+      {{ arg }} \
+      {% endfor %}
+      {{ apisix_container_image }}
+
+{% for network in apisix_container_additional_networks %}
+ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} network connect {{ network }} {{ apisix_identifier }}
+{% endfor %}
+
+ExecStart={{ devture_systemd_docker_base_host_command_docker }} start --attach {{ apisix_identifier }}
+
+ExecStop=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} stop -t {{ devture_systemd_docker_base_container_stop_grace_time_seconds }} {{ apisix_identifier }} 2>/dev/null || true'
+ExecStop=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} rm {{ apisix_identifier }} 2>/dev/null || true'
+
+Restart=always
+RestartSec=30
+SyslogIdentifier={{ apisix_identifier }}
+
+[Install]
+WantedBy=multi-user.target
