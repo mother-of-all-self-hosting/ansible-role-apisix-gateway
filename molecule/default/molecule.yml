@@ -89,6 +89,15 @@ provisioner:
             key: "{{ apisix_gateway_molecule_admin_key }}"
             role: admin
 
+        # APISIX's own default for `enable_admin_ui` is `true`, and so is this
+        # role's. Turning it off here is what makes the probes in verify.yml
+        # evidence of anything: a `/ui/` that 404s while `/apisix/admin` on the
+        # very same port keeps answering can only be this variable reaching the
+        # running process. The image does ship the bundled dashboard's assets -
+        # verify.yml checks that separately, so that the 404 cannot be explained
+        # by an image that simply has no UI in it.
+        apisix_gateway_config_deployment_admin_enable_admin_ui: false
+
         # Exercises the configuration extension mechanism, which is a separate
         # code path from the variables above: this is merged over the rendered
         # configuration by `apisix_gateway_config_extension` rather than written

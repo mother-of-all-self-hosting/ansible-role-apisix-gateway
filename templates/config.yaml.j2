@@ -31,6 +31,8 @@ deployment:
 
     enable_admin_cors: {{ apisix_gateway_config_deployment_admin_enable_admin_cors | to_json }}
 
+    enable_admin_ui: {{ apisix_gateway_config_deployment_admin_enable_admin_ui | to_json }}
+
   etcd:
     host: {{ apisix_gateway_config_deployment_etcd_host | to_json }}
     prefix: {{ apisix_gateway_config_deployment_etcd_prefix | to_json }}

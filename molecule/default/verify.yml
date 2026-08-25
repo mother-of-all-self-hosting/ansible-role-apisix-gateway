@@ -246,6 +246,77 @@
 
     ############################################################
     #                                                          #
+    # The bundled dashboard                                    #
+    #                                                          #
+    ############################################################
+
+    # Since APISIX 3.13 the APISIX Dashboard ships inside the image, and APISIX
+    # serves it at `/ui/` - from inside the Admin API's own nginx `server`
+    # block, so on the Admin API's port and behind its `allow_admin` allowlist.
+    #
+    # The image is asked first, because everything below is a 404 and a 404 is
+    # exactly what an image carrying no bundled UI would answer for reasons
+    # having nothing to do with this role. The assets have to be present for the
+    # 404 to mean `enable_admin_ui: false` was honored.
+    - name: Check that the image ships the bundled dashboard's assets
+      ansible.builtin.command:
+        cmd: >-
+          docker run --rm --entrypoint sh {{ apisix_gateway_molecule_image }}
+          -c "grep -q 'APISIX Dashboard' /usr/local/apisix/ui/index.html"
+      register: apisix_gateway_bundled_ui_assets
+      changed_when: false
+      failed_when: false
+
+    - name: Assert the image ships the bundled dashboard's assets
+      ansible.builtin.assert:
+        that: apisix_gateway_bundled_ui_assets.rc == 0
+        fail_msg: >-
+          {{ apisix_gateway_molecule_image }} does not carry the bundled dashboard at
+          /usr/local/apisix/ui/index.html, so the `/ui/` probes below would pass
+          against an image that never had a UI to turn off.
+        success_msg: "The image carries the bundled dashboard at /usr/local/apisix/ui/index.html"
+
+    # The scenario sets `apisix_gateway_config_deployment_admin_enable_admin_ui`
+    # to `false`, against both APISIX's default and this role's, so a 404 here
+    # is that variable observed in the running process. `follow_redirects: none`
+    # keeps `/ui` honest: with the setting on, APISIX answers it with a 301 to
+    # `/ui/`, which the uri module would otherwise chase into a 200.
+    - name: Probe the bundled dashboard on the Admin API port
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ apisix_gateway_molecule_admin_bind_port }}{{ item }}"
+        method: GET
+        status_code: [200, 301, 302, 401, 403, 404, 502, 503]
+        follow_redirects: none
+      register: apisix_gateway_bundled_ui
+      loop:
+        - /ui
+        - /ui/
+
+    - name: Assert the bundled dashboard is not served when it is turned off
+      ansible.builtin.assert:
+        that: item.status == 404
+        fail_msg: >-
+          {{ item.item }} answered {{ item.status | default('none') }} instead of 404,
+          so `apisix_gateway_config_deployment_admin_enable_admin_ui: false` did not
+          reach the running process
+        success_msg: "{{ item.item }} answers 404 with enable_admin_ui turned off"
+      loop: "{{ apisix_gateway_bundled_ui.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    # The mirror image of the probes above, and the point of the whole block:
+    # the bundled UI and the Admin API share one listener, so turning the UI off
+    # must not have taken the Admin API down with it.
+    - name: Assert the Admin API still answers on the port the UI was turned off on
+      ansible.builtin.assert:
+        that: apisix_gateway_admin_routes.status == 200
+        fail_msg: >-
+          Turning the bundled UI off also stopped the Admin API on port
+          {{ apisix_gateway_molecule_admin_bind_port }}
+        success_msg: "The Admin API keeps answering on the port the bundled UI was turned off on"
+
+    ############################################################
+    #                                                          #
     # Routing traffic, end to end                              #
     #                                                          #
     ############################################################
@@ -458,5 +529,6 @@
           - "Running version (Server header): {{ apisix_gateway_root.server | default('unknown') }}"
           - "Data plane (unmatched request): {{ apisix_gateway_root.status }}"
           - "Admin API (configured key / wrong key): {{ apisix_gateway_admin_routes.status }} / {{ apisix_gateway_admin_wrong_key.status }}"
+          - "Bundled dashboard with enable_admin_ui off (/ui, /ui/): {{ apisix_gateway_bundled_ui.results | map(attribute='status') | join(', ') }}"
           - "Routing to whoami through the data plane: {{ apisix_gateway_whoami_response.status }}"
           - "Metrics (configured URI / APISIX default): {{ apisix_gateway_metrics.status }} / {{ apisix_gateway_metrics_default_uri.status }}"

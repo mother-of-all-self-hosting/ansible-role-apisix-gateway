@@ -278,6 +278,23 @@ apisix_gateway_config_deployment_admin_admin_key: []
 # Enable Admin API CORS response header `Access-Control-Allow-Origin`.
 apisix_gateway_config_deployment_admin_enable_admin_cors: true
 
+# Controls the `apisix.deployment.admin.enable_admin_ui` configuration property.
+#
+# Since APISIX 3.13, the APISIX Dashboard ships inside the `apache/apisix`
+# image itself instead of being released separately, and APISIX's own nginx
+# serves it at `/ui/`. `true` (which is also APISIX's own default, kept here so
+# that this role does not change the behavior of the image) serves it; `false`
+# makes `/ui/` return a 404.
+#
+# The UI is served from inside the Admin API's `server` block, so it shares
+# that listener's port (`apisix_gateway_config_deployment_admin_admin_listen_port`)
+# and its `apisix_gateway_config_deployment_admin_allow_admin` allowlist.
+# Making the UI reachable makes the Admin API reachable. The Admin API is
+# protected by `apisix_gateway_config_deployment_admin_admin_key`; the UI is
+# static files with no authentication of its own. See the README for how to
+# reach it without publishing it to the world.
+apisix_gateway_config_deployment_admin_enable_admin_ui: true
+
 # Controls the `apisix.deployment.etcd.host` configuration property.
 # This should contain at least one (but possibly multiple URLs) pointing to an same etcd cluster.
 apisix_gateway_config_deployment_etcd_host: []
