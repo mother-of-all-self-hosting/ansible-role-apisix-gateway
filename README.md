@@ -18,6 +18,12 @@ Check [`defaults/main.yml`](defaults/main.yml) for the full list of supported op
 
 💡 For an Ansible playbook which integrates this role and makes it easier to use, see the [Mother-of-All-Self-Hosting Ansible playbook](https://github.com/mother-of-all-self-hosting/mash-playbook).
 
+## Migrating from `apisix_gateway_*`
+
+This role used to be called `apisix-gateway` and all of its variables were prefixed `apisix_gateway_`. Both lost the `_gateway`: the role is `apisix` and its variables are `apisix_*`. Rename them in your configuration — the role fails with the full list of what to change if it finds any of the old names, whether it is enabled or not.
+
+Only the names changed. `apisix_identifier` still defaults to `apisix-gateway`, so the systemd service, the container, the container network and the base path are untouched by the rename, and nothing gets reinstalled or moved.
+
 ## The bundled dashboard (web UI)
 
 Since APISIX 3.13, the [APISIX Dashboard](https://github.com/apache/apisix-dashboard/releases/tag/notice) is no longer a separate project. It ships as a pure front-end inside the `apache/apisix` image this role installs, and APISIX's own nginx serves it — `/ui` redirects to `/ui/`, which serves the bundled assets.

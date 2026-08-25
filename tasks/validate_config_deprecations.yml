@@ -1,0 +1,43 @@
+# SPDX-FileCopyrightText: 2023 - 2026 Slavi Pantaleev
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+---
+# This file is included from tasks/main.yml unconditionally - deliberately not
+# from tasks/validate_config.yml, which only runs when the role is enabled.
+#
+# `apisix_gateway_enabled` was renamed along with everything else, so somebody
+# whose configuration still says `apisix_gateway_enabled: true` now has
+# `apisix_enabled` at whatever their playbook defaults it to. In the MASH
+# playbook that default is `false`, which would send them straight down the
+# uninstallation path: the service stopped, the systemd unit and the container
+# network deleted, and the base path removed. Failing here instead is the whole
+# point of these checks.
+
+- name: (Deprecation) Catch and report the apisix_gateway_* -> apisix_* rename
+  vars:
+    apisix_deprecated_variables: "{{ lookup('ansible.builtin.varnames', '^apisix_gateway_.+', wantlist=True) | sort }}"
+
+    # Variables which had already been renamed to something that is not a plain
+    # `apisix_gateway_` -> `apisix_` prefix swap. Without them, the message
+    # below would tell people to rename
+    # `apisix_gateway_systemd_required_systemd_services_list_auto` to a variable
+    # that has never existed (note the doubled `systemd`).
+    apisix_deprecated_variables_special_cases:
+      apisix_gateway_systemd_required_systemd_services_list_default: apisix_systemd_required_services_list_default
+      apisix_gateway_systemd_required_systemd_services_list_auto: apisix_systemd_required_services_list_auto
+      apisix_gateway_systemd_required_systemd_services_list_custom: apisix_systemd_required_services_list_custom
+      apisix_gateway_container_image_force_pull: <remove it - the community.docker.docker_image_pull module handles this natively>
+  when: apisix_deprecated_variables | length > 0
+  ansible.builtin.fail:
+    msg: |-
+      This role is now called `apisix` rather than `apisix-gateway`, and every one of its variables lost the `_gateway` from its prefix (`apisix_gateway_*` -> `apisix_*`). The role stopped installing only a gateway when APISIX 3.13 started shipping the APISIX Dashboard inside the `apache/apisix` image.
+
+      Please rename the following variables in your configuration file (vars.yml):
+      {% for old_name in apisix_deprecated_variables %}
+      - `{{ old_name }}` -> `{{ apisix_deprecated_variables_special_cases[old_name] | default('apisix_' + old_name | regex_replace('^apisix_gateway_', '')) }}`
+      {% endfor %}
+
+      Only the variable names changed. `apisix_identifier` still defaults to `apisix-gateway`, so your systemd service, container, container network and data path keep the names they have now, and nothing is reinstalled or moved.
+
+      If you run this role through the MASH playbook, the section markers in vars.yml (`# apisix_gateway`) and the tags (`--tags=setup-apisix-gateway`) were renamed the same way, to `# apisix` and `--tags=setup-apisix`.

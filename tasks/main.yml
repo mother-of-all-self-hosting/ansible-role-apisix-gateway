@@ -1,8 +1,28 @@
-# SPDX-FileCopyrightText: 2023 - 2024 Slavi Pantaleev
+# SPDX-FileCopyrightText: 2023 - 2026 Slavi Pantaleev
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 ---
+# Deliberately outside both blocks below and gated on nothing: somebody who
+# still configures `apisix_gateway_enabled: true` has `apisix_enabled` at
+# whatever their playbook defaults it to, and would otherwise be sent down the
+# uninstallation path without ever being told why. See the included file.
+#
+# The old tags are kept alive here, and only here, so that
+# `--tags=setup-apisix-gateway` reports the rename instead of quietly matching
+# no tasks at all and looking like a successful run that did nothing.
+- name: Perform APISIX deprecation checks
+  tags:
+    - setup-all
+    - setup-apisix
+    - install-all
+    - install-apisix
+    - setup-apisix-gateway
+    - install-apisix-gateway
+  block:
+    - name: Check the APISIX configuration for deprecated variables
+      ansible.builtin.include_tasks: "{{ role_path }}/tasks/validate_config_deprecations.yml"
+
 - name: Perform APISIX installation tasks
   when: apisix_enabled | bool
   tags:

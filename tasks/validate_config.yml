@@ -3,17 +3,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 ---
-- name: (Deprecation) Catch and report renamed settings
-  ansible.builtin.fail:
-    msg: >-
-      Your configuration contains a variable, which now has a different name.
-      Please change your configuration to rename the variable (`{{ item.old }}` -> `{{ item.new }}`).
-  when: "lookup('ansible.builtin.varnames', ('^' + item.old + '$'), wantlist=True) | length > 0"
-  with_items:
-    - { "old": "apisix_systemd_required_systemd_services_list_default", "new": "apisix_systemd_required_services_list_default" }
-    - { "old": "apisix_systemd_required_systemd_services_list_auto", "new": "apisix_systemd_required_services_list_auto" }
-    - { "old": "apisix_systemd_required_systemd_services_list_custom", "new": "apisix_systemd_required_services_list_custom" }
-    - { "old": "apisix_container_image_force_pull", "new": "<removed> (the new community.docker.docker_image_pull module handles this natively)" }
+# The `apisix_gateway_*` -> `apisix_*` rename is caught in
+# tasks/validate_config_deprecations.yml, which tasks/main.yml includes
+# regardless of whether the role is enabled. Every variable this role has ever
+# had carried the old prefix, including the ones deprecated before the rename,
+# so there is nothing left for a list of individual renames to catch here.
 
 - name: Fail if required APISIX settings not defined
   ansible.builtin.fail:
