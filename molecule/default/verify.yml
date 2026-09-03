@@ -519,13 +519,13 @@
         cmd: "docker rm -f {{ apisix_molecule_whoami_identifier }}"
       changed_when: true
 
-    - name: Show APISIX verification summary
+    - name: Show the APISIX verification summary
       ansible.builtin.debug:
         msg:
           - "APISIX systemd: {{ apisix_service.status.ActiveState }}"
-          - "Running version (Server header): {{ apisix_root.server | default('unknown') }}"
-          - "Data plane (unmatched request): {{ apisix_root.status }}"
-          - "Admin API (configured key / wrong key): {{ apisix_admin_routes.status }} / {{ apisix_admin_wrong_key.status }}"
-          - "Bundled dashboard with enable_admin_ui off (/ui, /ui/): {{ apisix_bundled_ui.results | map(attribute='status') | join(', ') }}"
-          - "Routing to whoami through the data plane: {{ apisix_whoami_response.status }}"
-          - "Metrics (configured URI / APISIX default): {{ apisix_metrics.status }} / {{ apisix_metrics_default_uri.status }}"
+          - "APISIX version (Server header): {{ apisix_root.server | default('unknown') }}"
+          - "APISIX data plane (unmatched request): {{ apisix_root.status }}"
+          - "APISIX admin API (configured key / wrong key): {{ apisix_admin_routes.status }} / {{ apisix_admin_wrong_key.status }}"
+          - "APISIX bundled dashboard with enable_admin_ui off (/ui, /ui/): {{ apisix_bundled_ui.results | map(attribute='status') | join(', ') }}"
+          - "APISIX routing to whoami through the data plane: {{ apisix_whoami_response.status }}"
+          - "APISIX metrics (configured URI / APISIX default): {{ apisix_metrics.status }} / {{ apisix_metrics_default_uri.status }}"
