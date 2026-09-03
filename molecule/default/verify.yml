@@ -507,14 +507,9 @@
       ansible.builtin.assert:
         that:
           - apisix_molecule_running_version | length > 0
-          - >-
-            apisix_molecule_running_version
-            ==
-            (apisix_defaults.apisix_version | string | regex_replace('^v', ''))
-        fail_msg: >-
-          APISIX reports `{{ apisix_root.server | default('no Server header') }}`,
-          expected version {{ apisix_defaults.apisix_version }}
-        success_msg: "APISIX reports version {{ apisix_molecule_running_version }}"
+          - apisix_molecule_running_version == (apisix_defaults.apisix_version | string | regex_replace('^v', ''))
+        fail_msg: "APISIX reports {{ apisix_root.server | default('no Server header') }}, expected {{ apisix_defaults.apisix_version }}"
+        success_msg: "APISIX reports {{ apisix_molecule_running_version }}"
       vars:
         apisix_molecule_running_version: >-
           {{ apisix_root.server | default('') | regex_replace('^APISIX/', '') | regex_replace('^v', '') | trim }}
