@@ -5,7 +5,7 @@ roles:
     version: 8.0.0
     name: ansible-role-docker
   - src: https://github.com/mother-of-all-self-hosting/ansible-role-etcd
-    version: v3.7.1-0
+    version: v3.7.1-1
     name: ansible-role-etcd
   - src: https://github.com/devture/com.devture.ansible.role.playbook_help
     version: main
