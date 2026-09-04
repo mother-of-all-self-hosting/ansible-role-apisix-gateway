@@ -17,14 +17,10 @@
     apisix_molecule_metrics_url: "http://127.0.0.1:{{ apisix_molecule_metrics_bind_port }}"
 
   tasks:
-    # Role defaults are not in scope in a verify playbook, but the version that
-    # Renovate bumps lives in them and is what the running process is checked
-    # against below, and so does `apisix_identifier`, which names the systemd
-    # unit and the container. Only literal leaf values may be read this way -
-    # include_vars does not render Jinja, so anything derived (the image
-    # reference, the configuration) would come back as an unevaluated template
-    # string.
-    - name: Load the APISIX role defaults
+    # The role is not included in this playbook, so its defaults are not in
+    # scope. Reading defaults/main.yml directly ties the version assertion
+    # below.
+    - name: Load the role defaults
       ansible.builtin.include_vars:
         file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
         name: apisix_defaults

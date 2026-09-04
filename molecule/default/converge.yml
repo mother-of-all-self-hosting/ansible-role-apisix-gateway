@@ -27,13 +27,10 @@
   become: true
   gather_facts: false
   tasks:
-    # The role is not included in this play, so its defaults are not in scope
-    # here. The unit is named after `apisix_identifier`, whose value is
-    # deliberately still `apisix-gateway` while the variables are not - reading
-    # it rather than restating it keeps this play right if that ever changes.
-    # Only literal leaf values may be read this way; include_vars does not
-    # render Jinja.
-    - name: Load the APISIX role defaults
+    # The role is not included in this playbook, so its defaults are not in
+    # scope. Reading defaults/main.yml directly ties the version assertion
+    # below.
+    - name: Load the role defaults
       ansible.builtin.include_vars:
         file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
         name: apisix_defaults
